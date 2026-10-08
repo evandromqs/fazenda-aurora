@@ -1,0 +1,463 @@
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root {
+  --primary: #edc977;
+  --primary-hover: #ffe4a5;
+  --bg-panel: #203b30f0;
+  --bg-border: #ffffff25;
+  --text-main: #fff5de;
+  --text-muted: #d4dfce;
+  --accent-gold: #ffe29a;
+}
+
+body {
+  margin: 0;
+  overflow: hidden;
+  background: #aed8ca;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  color: var(--text-main);
+  user-select: none;
+  -webkit-user-select: none;
+  touch-action: none;
+}
+
+canvas {
+  display: block;
+  touch-action: none;
+  width: 100vw;
+  height: 100vh;
+}
+
+.panel {
+  background: var(--bg-panel);
+  border: 1px solid var(--bg-border);
+  border-radius: 18px;
+  box-shadow: 0 8px 32px rgba(19, 41, 27, 0.35);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+#hud {
+  position: absolute;
+  top: max(16px, env(safe-area-inset-top));
+  left: max(16px, env(safe-area-inset-left));
+  padding: 16px 22px;
+  pointer-events: none;
+  z-index: 4;
+}
+
+h1 {
+  font-family: Georgia, "Times New Roman", serif;
+  margin: 0 0 6px;
+  font-size: 26px;
+  color: var(--primary-hover);
+  letter-spacing: -0.5px;
+}
+
+#stats {
+  font-size: 13.5px;
+  line-height: 1.7;
+  max-width: 340px;
+  color: var(--text-muted);
+}
+
+#help {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  top: max(85px, env(safe-area-inset-top) + 65px);
+  padding: 16px 20px;
+  font-size: 12.5px;
+  line-height: 1.85;
+  max-width: 250px;
+  z-index: 4;
+}
+#help b { color: var(--primary-hover); }
+
+#bar {
+  position: absolute;
+  bottom: max(20px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 8px;
+  padding: 8px 12px;
+  z-index: 4;
+  max-width: 95vw;
+}
+
+button {
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  background: rgba(255, 255, 255, 0.08);
+  color: var(--text-main);
+  padding: 11px 16px;
+  border-radius: 12px;
+  font: inherit;
+  font-weight: 500;
+  transition: transform 0.1s ease, background 0.15s ease, color 0.15s ease;
+}
+
+button:hover, button.active {
+  background: var(--primary);
+  color: #233d32;
+  border-color: var(--primary);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:focus-visible {
+  outline: 3px solid var(--primary-hover);
+  outline-offset: 2px;
+}
+
+#prompt {
+  position: absolute;
+  bottom: max(95px, env(safe-area-inset-bottom) + 75px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 22px;
+  text-align: center;
+  max-width: 90vw;
+  font-weight: 600;
+  font-size: 14.5px;
+  color: var(--primary-hover);
+  z-index: 4;
+  pointer-events: none;
+  transition: opacity 0.2s ease;
+}
+
+#toast {
+  position: absolute;
+  z-index: 25;
+  top: max(120px, env(safe-area-inset-top) + 100px);
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 12px 24px;
+  opacity: 0;
+  transition: opacity 0.25s ease, transform 0.25s ease;
+  pointer-events: none;
+  text-align: center;
+  font-weight: 600;
+  font-size: 14px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+#shop {
+  position: absolute;
+  inset: 0;
+  background: rgba(16, 39, 27, 0.75);
+  display: none;
+  place-items: center;
+  z-index: 15;
+  padding: 20px;
+}
+#shop article {
+  width: min(440px, 94vw);
+  padding: 26px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+#shop button {
+  display: block;
+  width: 100%;
+  margin-top: 10px;
+  text-align: left;
+}
+
+small { opacity: 0.8; }
+[hidden] { display: none !important; }
+
+.eyebrow {
+  display: block;
+  color: #c5d5b5;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  margin-bottom: 8px;
+}
+
+#wallet {
+  color: var(--accent-gold);
+  font-size: 17px;
+  margin-top: 8px;
+  font-weight: 700;
+}
+
+.meter {
+  height: 6px;
+  background: rgba(255, 255, 255, 0.15);
+  margin-top: 8px;
+  border-radius: 9px;
+  overflow: hidden;
+}
+#energyFill {
+  height: 100%;
+  background: linear-gradient(90deg, #8dc563, #edd477);
+  transition: width 0.3s ease;
+}
+
+#toolbar {
+  position: absolute;
+  right: max(16px, env(safe-area-inset-right));
+  top: max(16px, env(safe-area-inset-top));
+  display: flex;
+  padding: 6px;
+  gap: 6px;
+  z-index: 5;
+}
+#toolbar button {
+  font-size: 12.5px;
+  padding: 9px 13px;
+}
+
+#quest {
+  position: absolute;
+  left: max(16px, env(safe-area-inset-left));
+  bottom: max(120px, env(safe-area-inset-bottom) + 90px);
+  width: 250px;
+  padding: 16px;
+  font-size: 12.5px;
+  line-height: 1.65;
+  pointer-events: none;
+  z-index: 4;
+}
+
+progress {
+  width: 100%;
+  height: 7px;
+  accent-color: var(--primary);
+  margin-top: 10px;
+  border-radius: 4px;
+}
+#goalText { display: block; margin-top: 4px; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  display: grid;
+  place-items: center;
+  padding: 20px;
+  background: rgba(16, 39, 27, 0.78);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  overflow-y: auto;
+}
+
+.menu-card {
+  width: min(500px, 100%);
+  padding: 36px;
+  text-align: center;
+  background: #203b30f6;
+}
+.menu-card h1 {
+  font-size: clamp(42px, 7vw, 68px);
+  line-height: 0.96;
+  font-weight: normal;
+}
+.menu-card h1 em { color: var(--primary); font-style: italic; }
+.menu-card p { line-height: 1.65; color: var(--text-muted); }
+#menuSummary { margin: 16px 0; font-size: 13.5px; color: var(--text-muted); }
+.primary { background: var(--primary); color: #233d32; font-weight: 700; border-color: var(--primary); }
+#play { width: 100%; margin-bottom: 10px; padding: 16px; font-size: 16px; }
+.menu-row { display: flex; gap: 8px; }
+.menu-row button { flex: 1; font-size: 13.5px; }
+.subtle { border: 0; margin: 10px 0; font-size: 12px; opacity: 0.8; }
+.subtle:hover { opacity: 1; }
+.menu-card > small { display: block; font-size: 11px; margin-top: 10px; color: #a4beab; }
+
+.modal-card {
+  width: min(650px, 100%);
+  padding: 30px;
+  background: #203b30f8;
+}
+.modal-card p, .modal-card li { line-height: 1.8; color: var(--text-muted); }
+.modal-card ol { padding-left: 20px; }
+.modal-card code {
+  background: rgba(255, 255, 255, 0.15);
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: inherit;
+  color: var(--accent-gold);
+}
+
+#characterList {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin: 22px 0;
+}
+.character-card {
+  padding: 16px 10px;
+  text-align: center;
+}
+.character-card strong, .character-card small { display: block; }
+.character-card small { margin-top: 4px; font-size: 11px; }
+
+.avatar {
+  height: 100px;
+  width: 80px;
+  position: relative;
+  display: block;
+  margin: 0 auto 10px;
+}
+.avatar::before {
+  content: '';
+  position: absolute;
+  left: 23px;
+  top: 15px;
+  width: 34px;
+  height: 34px;
+  background: var(--skin);
+  border-radius: 9px;
+  box-shadow: 0 -9px 0 var(--hat);
+}
+.avatar::after {
+  content: '';
+  position: absolute;
+  left: 15px;
+  top: 52px;
+  width: 50px;
+  height: 36px;
+  background: var(--shirt);
+  border-radius: 8px 8px 3px 3px;
+  box-shadow: -10px 0 0 -5px var(--skin), 10px 0 0 -5px var(--skin);
+}
+
+button:disabled { opacity: 0.42; cursor: not-allowed; }
+
+/* 📱 Controles Touch para Celular / Tablet */
+.touch-only {
+  display: none;
+  pointer-events: none;
+  position: fixed;
+  inset: 0;
+  z-index: 6;
+}
+
+body.touch-active .touch-only {
+  display: block;
+}
+
+#touchJoy {
+  position: absolute;
+  bottom: max(25px, env(safe-area-inset-bottom) + 15px);
+  left: max(20px, env(safe-area-inset-left) + 10px);
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: rgba(35, 61, 50, 0.5);
+  border: 2px solid rgba(255, 255, 255, 0.25);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  pointer-events: auto;
+  touch-action: none;
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+}
+
+#touchKnob {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 50px;
+  height: 50px;
+  margin: -25px 0 0 -25px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #ffe4a5 30%, #edc977 100%);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  pointer-events: none;
+  transition: transform 0.05s ease-out;
+}
+
+#touchActions {
+  position: absolute;
+  bottom: max(25px, env(safe-area-inset-bottom) + 15px);
+  right: max(20px, env(safe-area-inset-right) + 10px);
+  display: flex;
+  flex-direction: column-reverse;
+  gap: 12px;
+  align-items: flex-end;
+  pointer-events: auto;
+}
+
+.touch-btn {
+  pointer-events: auto;
+  touch-action: manipulation;
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  background: rgba(32, 59, 48, 0.85);
+  color: var(--accent-gold);
+  font-weight: 700;
+  font-size: 13px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  padding: 0;
+}
+
+.touch-btn:active {
+  transform: scale(0.92);
+  background: var(--primary);
+  color: #203b30;
+}
+
+.touch-action {
+  width: 72px;
+  height: 72px;
+  font-size: 14px;
+  background: rgba(237, 201, 119, 0.25);
+  border-color: var(--primary);
+  color: var(--primary-hover);
+}
+
+.touch-cam {
+  width: 48px;
+  height: 48px;
+  font-size: 18px;
+}
+
+.touch-sleep {
+  width: auto;
+  height: 48px;
+  border-radius: 24px;
+  padding: 0 16px;
+  font-size: 13px;
+}
+
+body.menu-open #hud,
+body.menu-open #help,
+body.menu-open #bar,
+body.menu-open #quest,
+body.menu-open #prompt,
+body.menu-open #toolbar,
+body.menu-open #touchControls {
+  visibility: hidden;
+}
+
+@media (max-width: 800px) {
+  #help { display: none; }
+  #hud { padding: 12px 16px; }
+  h1 { font-size: 20px; }
+  #quest { display: none; }
+  #bar { bottom: max(14px, env(safe-area-inset-bottom)); }
+  #bar button { padding: 8px 12px; font-size: 12px; }
+  #toolbar button { padding: 8px 10px; font-size: 11px; }
+  #prompt { font-size: 13px; bottom: max(100px, env(safe-area-inset-bottom) + 85px); }
+  .modal-card { padding: 20px; }
+  .menu-card { padding: 26px 20px; }
+  .character-card { padding: 12px 4px; }
+  .avatar { transform: scale(0.85); margin-bottom: 6px; }
+}
+
+@media (max-height: 600px) {
+  .menu-card { padding: 20px; }
+  .menu-card h1 { font-size: 38px; }
+  #hud { padding: 8px 12px; }
+  #hud h1 { font-size: 18px; }
+  #bar button { padding: 6px 10px; }
+}

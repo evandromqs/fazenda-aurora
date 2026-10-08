@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>Fazenda Aurora — Jogo 3D de Fazenda</title>
+  
+  <!-- SEO & Social Sharing -->
+  <meta name="description" content="Fazenda Aurora — Jogo 3D relaxante de fazenda no navegador inspirado em Stardew Valley. Plante, colha, converse com os moradores e prospere no campo.">
+  <meta name="theme-color" content="#203b30">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  
+  <meta property="og:title" content="Fazenda Aurora — Jogo 3D de Fazenda">
+  <meta property="og:description" content="Cultive seu próprio ritmo. Plante, regue, colha e viva a tranquilidade do campo direto no navegador.">
+  <meta property="og:image" content="game-preview.png">
+  <meta property="og:type" content="website">
+  
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:title" content="Fazenda Aurora — Jogo 3D de Fazenda">
+  <meta name="twitter:description" content="Plante, colha e viva no campo direto no navegador.">
+  <meta name="twitter:image" content="game-preview.png">
+
+  <link rel="stylesheet" href="style.css">
+  <script defer src="three.min.js"></script>
+  <script defer src="sound.js"></script>
+  <script defer src="game.js"></script>
+</head>
+<body>
+  <!-- HUD Superior Esquerdo -->
+  <header id="hud" class="panel">
+    <span class="eyebrow">SEU PEQUENO REFÚGIO</span>
+    <h1>☀ Fazenda Aurora</h1>
+    <div id="stats"></div>
+    <div class="meter"><div id="energyFill"></div></div>
+    <div id="wallet"></div>
+  </header>
+
+  <!-- Barra de Ferramentas / Opções -->
+  <nav id="toolbar" class="panel" aria-label="Opções do jogo">
+    <button id="soundButton" title="Alternar som">🔊 Som</button>
+    <button id="cameraButton" title="Alternar ângulo da câmera">Câmera · V</button>
+    <button id="menuButton" title="Abrir menu">Menu · Esc</button>
+  </nav>
+
+  <!-- Ajuda / Teclas (Desktop) -->
+  <aside id="help" class="panel">
+    <b>Uma vida mais tranquila.</b><br>
+    WASD / setas · caminhar<br>E · plantar, regar e colher<br>
+    1 / 2 / 3 · escolher sementes<br>R · dormir perto da casa<br>V · mudar a câmera<br>Q / F · girar a câmera<br>Esc · pausar / menu<br><br>
+    <small>Moedas douradas valem 5 cada.<br>Converse com os moradores usando E.</small>
+  </aside>
+
+  <!-- Painel de Missões e Metas -->
+  <aside id="quest" class="panel">
+    <span class="eyebrow">VIDA NA VILA</span>
+    <div id="questText"></div>
+    <progress id="goal" max="500" value="0"></progress>
+    <small id="goalText"></small>
+  </aside>
+
+  <!-- Notificações e Avisos -->
+  <div id="toast" class="panel" role="status"></div>
+  <div id="prompt" class="panel"></div>
+
+  <!-- Barra de Seleção de Sementes -->
+  <nav id="bar" class="panel" aria-label="Sementes">
+    <button data-seed="0">1 · Cenoura</button>
+    <button data-seed="1">2 · Tomate</button>
+    <button data-seed="2">3 · Abóbora</button>
+  </nav>
+
+  <!-- Controles Touch para Celular / Tablet -->
+  <div id="touchControls" class="touch-only" aria-hidden="true">
+    <div id="touchJoy" aria-label="Joystick de movimento">
+      <div id="touchKnob"></div>
+    </div>
+    <div id="touchActions">
+      <button id="touchActionBtn" class="touch-btn touch-action" title="Interagir">Ação</button>
+      <button id="touchSleepBtn" class="touch-btn touch-sleep" title="Dormir" hidden>🛌 Dormir</button>
+      <button id="touchCamBtn" class="touch-btn touch-cam" title="Câmera">🎥</button>
+    </div>
+  </div>
+
+  <!-- Mercadinho da Vila -->
+  <div id="shop">
+    <article class="panel" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+      <h1 id="shopTitle">Mercadinho da vila</h1>
+      <p>Sementes novas, colheitas fresquinhas.</p>
+      <div id="shopStats"></div>
+      <button data-buy="0">🥕 5 sementes de cenoura · 20 moedas</button>
+      <button data-buy="1">🍅 5 sementes de tomate · 35 moedas</button>
+      <button data-buy="2">🎃 5 sementes de abóbora · 50 moedas</button>
+      <button id="sell">Vender toda a colheita</button>
+      <button id="close">Voltar para a fazenda</button>
+    </article>
+  </div>
+
+  <!-- Menu Principal -->
+  <section id="menu" class="overlay" aria-label="Menu principal">
+    <article class="menu-card panel" role="dialog" aria-modal="true" aria-labelledby="menuTitle">
+      <span class="eyebrow">CULTIVE SEU PRÓPRIO RITMO</span>
+      <h1 id="menuTitle">Fazenda<br><em>Aurora</em></h1>
+      <p>Uma casa no campo. Novos amigos.<br>Uma história que cresce com você.</p>
+      <div id="menuSummary"></div>
+      <button id="play" class="primary">Entrar na fazenda →</button>
+      <div class="menu-row">
+        <button id="charactersButton">Seu personagem</button>
+        <button id="instructionsButton">Como jogar</button>
+      </div>
+      <button id="newGame" class="subtle">Começar uma nova fazenda</button>
+      <p id="resetConfirm" hidden>
+        Apagar o progresso atual?<br>
+        <button id="confirmReset">Sim, recomeçar</button>
+        <button id="cancelReset">Cancelar</button>
+      </p>
+      <small>Salvamento automático no navegador · Funciona no PC e Celular</small>
+    </article>
+  </section>
+
+  <!-- Escolha de Personagem -->
+  <section id="characters" class="overlay" hidden>
+    <article class="panel modal-card" role="dialog" aria-modal="true" aria-labelledby="charactersTitle">
+      <span class="eyebrow">QUEM VAI CUIDAR DA FAZENDA?</span>
+      <h1 id="charactersTitle">Escolha seu personagem</h1>
+      <p>A escolha é visual. Todos começam com as mesmas oportunidades.</p>
+      <div id="characterList"></div>
+      <button id="charactersBack" class="primary">Voltar ao menu</button>
+    </article>
+  </section>
+
+  <!-- Instruções de Jogo -->
+  <section id="instructions" class="overlay" hidden>
+    <article class="panel modal-card" role="dialog" aria-modal="true" aria-labelledby="instructionsTitle">
+      <h1 id="instructionsTitle">Como jogar</h1>
+      <ol>
+        <li><strong>Movimento:</strong> No computador, use <code>WASD</code> ou setas. No celular, use o joystick na tela.</li>
+        <li><strong>Plantio e Rega:</strong> Escolha sementes (1–3 ou na barra). Pressione <code>E</code> (ou botão Ação) para plantar e novamente para regar.</li>
+        <li><strong>Dormir:</strong> Vá até a casa e aperte <code>R</code> (ou botão Dormir). Apenas plantas regadas crescem no dia seguinte!</li>
+        <li><strong>Colheita:</strong> Cenouras levam 1 dia; tomates levam 2; abóboras levam 3. Colha e venda no mercado.</li>
+        <li><strong>Economia:</strong> Recolha as moedas espalhadas pelos caminhos diariamente e entregue encomendas aos moradores (Lina e Bento).</li>
+      </ol>
+      <p><em>V</em> alterna a câmera (Diorama, Próxima e Aérea). <em>Q/F</em> giram a visão. <em>Esc</em> abre o menu.</p>
+      <button id="instructionsBack" class="primary">Entendi, vamos lá!</button>
+    </article>
+  </section>
+
+  <!-- Janela de Diálogo com Moradores -->
+  <section id="dialog" class="overlay" hidden>
+    <article class="panel modal-card" role="dialog" aria-modal="true" aria-labelledby="dialogTitle">
+      <span class="eyebrow">CONVERSA NA VILA</span>
+      <h1 id="dialogTitle"></h1>
+      <p id="dialogText"></p>
+      <button id="deliver" class="primary">Entregar encomenda</button>
+      <button id="dialogClose">Até mais!</button>
+    </article>
+  </section>
+</body>
+</html>

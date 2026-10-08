@@ -1,0 +1,9 @@
+# OS files
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Logs and test artifacts
+*.log
+node_modules/
+.cache/

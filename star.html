@@ -1,0 +1,2407 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Fazenda Aurora</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;overflow:hidden;background:#aed8ca;font-family:system-ui;color:#fff5de}
+canvas{display:block;touch-action:none}
+.panel{background:#233d32eb;border:1px solid #ffffff25;border-radius:18px;box-shadow:0 8px 30px #13291b25;backdrop-filter:blur(10px)}
+#hud{position:absolute;top:20px;left:20px;padding:18px 24px;pointer-events:none}
+h1{font-family:Georgia;margin:0 0 8px;font-size:27px;color:#ffe4a5}
+#stats{font-size:14px;line-height:1.8}
+#stats .srow{margin:1px 0}
+#stats .srow b{color:#ffe4a5}
+#ebar{display:inline-block;width:110px;height:9px;background:#ffffff22;border-radius:6px;overflow:hidden;vertical-align:middle}
+#ebar i{display:block;height:100%;background:linear-gradient(90deg,#9fe870,#edc977);border-radius:6px;transition:width .3s}
+#ebar.low i{background:#e4574f}
+#stats .sobj{margin-top:6px;background:#edc97722;border:1px dashed #edc97788;border-radius:10px;padding:6px 10px;color:#ffe4a5}
+#prompt kbd{background:#edc977;color:#233d32;border-radius:6px;padding:1px 8px;font-weight:700;font-family:inherit}
+#camBtn{position:fixed;right:14px;bottom:14px;width:52px;height:52px;border-radius:50%;font-size:24px;background:#233d32ee;color:#fff;z-index:6;padding:0}
+#bar button{flex:0 0 auto}
+#help{position:absolute;right:20px;top:20px;padding:18px;font-size:13px;line-height:1.9;max-width:260px}
+#help b{color:#ffe4a5}
+#bar{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;gap:8px;padding:10px;flex-wrap:nowrap;justify-content:flex-start;max-width:96vw;overflow-x:auto}
+button{cursor:pointer;border:1px solid #ffffff30;background:#ffffff0b;color:#fff5de;padding:12px 16px;border-radius:12px;font:inherit}
+button:hover,button.active{background:#edc977;color:#233d32}
+#prompt{position:absolute;bottom:110px;left:50%;transform:translateX(-50%);padding:12px 20px;text-align:center;max-width:90vw}
+#toast{position:absolute;top:145px;left:50%;transform:translateX(-50%);padding:12px 22px;opacity:0;transition:opacity .2s;pointer-events:none;text-align:center}
+#shop,#menu,#quest,#kitchen,#farm,#fish,#gift,#travel,#chest,#dresser{position:absolute;inset:0;background:#10271b80;display:none;place-items:center;z-index:10}
+#shop article,#menu article,#quest article,#kitchen article,#farm article,#fish article,#gift article,#travel article,#chest article,#dresser article{width:min(440px,92vw);padding:26px;max-height:88vh;overflow:auto}
+#shop button,#menu button,#quest button,#kitchen button,#farm button,#fish button,#gift button,#travel button,#chest button,#dresser button{display:block;width:100%;margin-top:10px;text-align:left}
+#questInfo,#kitchenList,#achList{font-size:14px;line-height:1.9;margin:10px 0}
+#menuStats{font-size:14px;line-height:1.8;margin:10px 0}
+#touch{position:fixed;left:0;right:0;bottom:0;height:0;display:none;z-index:5}
+body.touch #touch{display:block}
+#joy{position:fixed;left:14px;bottom:100px;width:124px;height:124px;border-radius:50%;background:#233d3244;border:1px solid #ffffff40;touch-action:none}
+#knob{position:absolute;left:50%;top:50%;width:54px;height:54px;margin:-27px 0 0 -27px;border-radius:50%;background:#ffe4a5cc}
+.tbtn{position:fixed;bottom:108px;width:66px;height:66px;border-radius:50%;font-size:22px;background:#233d32dd;color:#ffe4a5;border:1px solid #ffffff40;touch-action:none}
+#btnE{right:96px}#btnR{right:18px}
+#slotRow{display:flex;gap:8px}
+#slotRow button{flex:1;text-align:center}
+#kitchenList button{padding:8px 12px}
+#topbar{position:fixed;top:14px;left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:6;align-items:center}
+#compass{padding:8px 14px;font-size:14px}
+#farmBtn{width:46px;height:46px;border-radius:50%;font-size:20px;background:#233d32ee;color:#fff;padding:0}
+#minimap{position:fixed;left:14px;bottom:14px;width:140px;height:140px;border-radius:14px;border:1px solid #ffffff30;z-index:5}
+#seasonDial{width:54px;height:54px}
+#hudTop{display:flex;align-items:center;gap:10px}
+#hudTop h1{margin:0}
+#fishBar{position:relative;height:22px;background:#ffffff18;border-radius:11px;overflow:hidden;margin:10px 0}
+#fishZone{position:absolute;top:0;bottom:0;background:#7dd87d88}
+#fishMarker{position:absolute;top:-2px;bottom:-2px;width:6px;background:#ffe4a5;border-radius:3px}
+#giftList button{padding:8px 12px}
+body.photo #hud,body.photo #help,body.photo #bar,body.photo #prompt,body.photo #toast,body.photo #topbar,body.photo #minimap,body.photo #camBtn,body.photo #farmBtn{display:none!important}
+#travelList button,#chestInfo,#dressInfo{font-size:14px;line-height:1.9}
+small{opacity:.75}
+@media(max-width:700px){#help{display:none}#hud{top:10px;left:10px;padding:12px}h1{font-size:22px}#bar button{padding:10px;font-size:12px}}
+</style>
+</head>
+<body>
+<div id="hud" class="panel">
+<div id="hudTop"><h1 id="gameTitle">☀ Fazenda Aurora</h1><canvas id="seasonDial" width="54" height="54"></canvas></div>
+<div id="stats"></div>
+</div>
+<div id="help" class="panel">
+<b>Uma vida mais tranquila.</b><br>
+WASD / setas · caminhar<br>
+E · plantar, regar e colher<br>
+1–5 · escolher sementes<br>
+F · adubar (acelera)<br>
+R · dormir perto da casa<br>
+M · som · V · câmera · Esc · menu<br>
+Q/X · girar (3ª pessoa) · C · cinema · P · foto<br>
+B · painel · H · buzina/chamar<br><br>
+<small>Chuva rega sozinha. Estações mudam o crescimento.<br>
+Colheita madura apodrece em 2 dias!<br>
+Alimente as galinhas 🐔 para ganhar ovos 🥚.<br>
+Quadro 📋 e cozinha 🍳 usam o E por perto.<br>
+⛏️ mina a oeste · 🎣 cais no lago · B painel</small>
+</div>
+<div id="topbar"><div id="compass" class="panel">🧭 –</div><button id="farmBtn" title="Painel da fazenda (B)">📊</button></div>
+<div id="toast" class="panel"></div>
+<div id="prompt" class="panel"></div>
+<div id="bar" class="panel">
+<button data-seed="0">1 · 🥕 Cenoura</button>
+<button data-seed="1">2 · 🍅 Tomate</button>
+<button data-seed="2">3 · 🎃 Abóbora</button>
+<button data-seed="3">4 · 🌽 Milho</button>
+<button data-seed="4">5 · 🍓 Morango</button>
+</div>
+<div id="shop">
+<article class="panel">
+<h1>Mercadinho da vila</h1>
+<p>Sementes novas, colheitas fresquinhas.</p>
+<div id="shopStats"></div>
+<button data-buy="0">🥕 5 sementes de cenoura · 20 moedas</button>
+<button data-buy="1">🍅 5 sementes de tomate · 35 moedas</button>
+<button data-buy="2">🎃 5 sementes de abóbora · 50 moedas</button>
+<button data-buy="3">🌽 5 sementes de milho · 45 moedas</button>
+<button data-buy="4">🍓 5 sementes de morango · 70 moedas</button>
+<button id="expand">🌱 +8 canteiros · 150 moedas</button>
+<button id="sprinkler">💧 Aspersor automático · 200 moedas</button>
+<button id="fert">🌱 5 adubos · 40 moedas</button>
+<button id="bait">🪱 5 iscas · 15 moedas</button>
+<button id="upHoe">⛏️ Enxada</button>
+<button id="upCan">🚿 Regador</button>
+<button id="upScythe">🌾 Foice</button>
+<button id="upAxe">🪓 Machado</button>
+<button id="buyCart">🐴 Carroça</button>
+<button id="buyBike">🚲 Bicicleta</button>
+<button id="buyBoat">⛵ Barco</button>
+<button id="giftVil">🎁 Presentear o Gus</button>
+<button id="upHouse">🏠 Casa</button>
+<button id="sell">Vender colheita e ovos</button>
+<button id="close">Voltar para a fazenda</button>
+</article>
+</div>
+<div id="touch">
+<div id="joy"><div id="knob"></div></div>
+<button class="tbtn" id="btnE">E</button>
+<button class="tbtn" id="btnR">💤</button>
+</div>
+<div id="menu">
+<article class="panel">
+<h1>⏸ Pausado</h1>
+<p>Respire fundo. A fazenda espera. 🌾</p>
+<div id="menuStats"></div>
+<div id="slotRow"><button id="slot0"></button><button id="slot1"></button><button id="slot2"></button></div>
+<div id="achList"></div>
+<button id="resume">▶ Continuar</button>
+<button id="soundBtn">🔊 Som: ligado</button>
+<button id="restart">🗑 Recomeçar do zero</button>
+</article>
+</div>
+<button id="camBtn" title="Trocar câmera (V)">🗺️</button>
+<canvas id="minimap" width="140" height="140"></canvas>
+<div id="quest">
+<article class="panel">
+<h1>📋 Quadro de missões</h1>
+<div id="questInfo"></div>
+<button id="questClaim">Entregar</button>
+<button id="questClose">Fechar</button>
+</article>
+</div>
+<div id="kitchen">
+<article class="panel">
+<h1>🍳 Cozinha da fazenda</h1>
+<p>Cozinhe pratos valiosos ou coma para recuperar energia.</p>
+<div id="kitchenList"></div>
+<button id="kitchenClose">Fechar</button>
+</article>
+</div>
+<div id="farm">
+<article class="panel">
+<h1>📊 Painel da fazenda</h1>
+<div id="farmInfo"></div>
+<button id="farmClose">Fechar</button>
+</article>
+</div>
+<div id="fish">
+<article class="panel">
+<h1>🎣 Pescaria</h1>
+<div id="fishCollection"></div>
+<div id="fishBar"><div id="fishZone"></div><div id="fishMarker"></div></div>
+<div id="fishResult">Jogue a isca e fisgue na zona verde!</div>
+<button id="fishBtn">Jogar isca (Espaço)</button>
+<button id="fishClose">Guardar vara</button>
+</article>
+</div>
+<div id="gift">
+<article class="panel">
+<h1>🎁 Presentear</h1>
+<div id="giftNPC"></div>
+<div id="giftList"></div>
+<button id="giftClose">Fechar</button>
+</article>
+</div>
+<div id="travel">
+<article class="panel">
+<h1>🌀 Totem de viagem</h1>
+<p>Para onde vamos?</p>
+<div id="travelList"></div>
+<button id="travelClose">Ficar aqui</button>
+</article>
+</div>
+<div id="chest">
+<article class="panel">
+<h1>📦 Baú do sótão</h1>
+<div id="chestInfo"></div>
+<button id="chestStore">Guardar tudo</button>
+<button id="chestTake">Retirar tudo</button>
+<button id="chestClose">Fechar</button>
+</article>
+</div>
+<div id="dresser">
+<article class="panel">
+<h1>👕 Guarda-roupa</h1>
+<p>Cada troca: 20 moedas.</p>
+<button id="dressSkin">Pele</button>
+<button id="dressShirt">Roupa</button>
+<button id="dressHat">Chapéu</button>
+<button id="dressClose">Fechar</button>
+</article>
+</div>
+<script type="importmap">
+{"imports":{"three":"https://cdn.jsdelivr.net/npm/three@0.160.1/build/three.module.js"}}
+</script>
+<script>
+window.__auroraBooted=false;
+setTimeout(function(){
+ if(!window.__auroraBooted){
+  var p=document.getElementById('prompt');
+  if(p)p.textContent='Não foi possível carregar o motor 3D. Verifique a conexão e recarregue.';
+ }
+},8000);
+</script>
+<script type="module">
+import * as THREE from 'three';
+const $=id=>document.getElementById(id);
+const crops=[
+ {name:'Cenoura',icon:'🥕',color:0xf3a13c,price:14,cost:20},
+ {name:'Tomate',icon:'🍅',color:0xe96750,price:25,cost:35},
+ {name:'Abóbora',icon:'🎃',color:0xe99730,price:42,cost:50},
+ {name:'Milho',icon:'🌽',color:0xf2d14e,price:30,cost:45},
+ {name:'Morango',icon:'🍓',color:0xe84a5f,price:55,cost:70}
+];
+// Dias p/ amadurecer por cultura em [Primavera, Verão, Outono, Inverno].
+const grow=[[1,1,2,2],[2,1,2,3],[3,2,3,4],[2,1,2,3],[2,2,3,4]];
+const SEASONS=['Primavera','Verão','Outono','Inverno'];
+const seasonIdx=day=>Math.floor((day-1)/4)%4;
+const seasonOf=day=>SEASONS[seasonIdx(day)];
+function effDays(t){return grow[t][seasonIdx(state.day)];}
+const GOALS=[500,1000,2500,5000];
+const TUTS=['Ande com WASD, setas ou o joystick','Plante uma semente (E no canteiro)','Regue a planta (E de novo)','Durma na casa (R)','Colha a planta madura (E)','Venda no mercado'];
+const EGG_PRICE=8;
+const TIER_N=['Base','Cobre','Ferro','Ouro'];
+function toolCost(t){return 120*Math.pow(2,t);}
+const TOOL_ORE=[{copper:2},{iron:3},{gold:2}];
+const HOUSE_COST=[300,600];
+function energyMax(){return state.house>=3?160:state.house===2?130:100;}
+function isFestivalDay(){return state.day===11||state.day===15;}
+function rollWeather(){const r=Math.random();return r<0.25?'chuva':r<0.5?'nublado':'sol';}
+function cost(v){
+ let c=v;
+ if(isFestivalDay())c=Math.floor(c*0.75);
+ if(state.npc.vil>=6)c=Math.floor(c*0.9);
+ return Math.max(1,c);
+}
+const ORES=[
+ {id:'copper',name:'cobre',icon:'🟠',color:0xe08a4e,price:25},
+ {id:'iron',name:'ferro',icon:'⚙️',color:0x9aa3ad,price:45},
+ {id:'gold',name:'ouro',icon:'🟡',color:0xffd34e,price:90}];
+const ROCKS=[{x:-19,z:-14,t:0},{x:-17.5,z:-15.5,t:0},{x:-16,z:-13.5,t:1},{x:-18.5,z:-11.5,t:1},{x:-15.5,z:-16,t:2}];
+const FISH=[
+ {id:'lambari',name:'Lambari',icon:'🐟',price:12},
+ {id:'tilapia',name:'Tilápia',icon:'🐠',price:25},
+ {id:'bagre',name:'Bagre',icon:'🐡',price:40},
+ {id:'dourado',name:'Dourado',icon:'👑',price:80}];
+const NPCS={
+ vil:{name:'Feirante Gus',pos:[11,4.7],love:4,like:'soup',gift:'🍓 morangos',boon:'10% de desconto no mercado'},
+ marta:{name:'Marta',pos:[-3.5,-9.5],love:'salad',like:4,gift:'🥗 saladas',boon:'+3 adubos toda manhã'},
+ tome:{name:'Pescador Tomé',pos:[18,-7],loveFish:true,like:3,gift:'🐟 peixes',boon:'+2 iscas toda manhã'}};
+const RECIPES=[
+ {id:'salad',name:'Salada',icon:'🥗',need:{1:2,0:1},sell:75,energy:25},
+ {id:'soup',name:'Sopa de abóbora',icon:'🍲',need:{2:2},sell:120,energy:40},
+ {id:'juice',name:'Suco de morango',icon:'🧃',need:{4:3},sell:200,energy:30}];
+const ACH=[
+ {id:'first_harvest',icon:'🌱',name:'Primeira colheita',check:()=>state.stats.colhidas>=1},
+ {id:'first_egg',icon:'🥚',name:'Primeiro ovo',check:()=>state.stats.ovos>=1},
+ {id:'night10',icon:'🌙',name:'10 noites na fazenda',check:()=>state.stats.noites>=10},
+ {id:'seasons',icon:'🍂',name:'Todas as estações',check:()=>state.seasonsSeen.length>=4},
+ {id:'goals',icon:'🏆',name:'Todas as metas',check:()=>state.goalIdx>=4},
+ {id:'eggs25',icon:'🍳',name:'25 ovos coletados',check:()=>state.stats.ovos>=25},
+ {id:'quests5',icon:'📋',name:'5 missões cumpridas',check:()=>state.questsDone>=5},
+ {id:'goldtool',icon:'🔧',name:'Ferramenta de ouro',check:()=>Object.values(state.tools).some(t=>t>=3)},
+ {id:'chef',icon:'🧑‍🍳',name:'Chef da vila',check:()=>state.stats.cooked>=1},
+ {id:'bigfarm',icon:'🚜',name:'Fazenda máxima',check:()=>state.rows>=6},
+ {id:'miner',icon:'⛏️',name:'Primeiro minério',check:()=>state.stats.ores>=1},
+ {id:'fisher',icon:'🎣',name:'Primeiro peixe',check:()=>state.stats.fishCaught>=1},
+ {id:'friend',icon:'❤️',name:'Coração conquistado',check:()=>Object.values(state.npc).some(v=>v>=6)},
+ {id:'home3',icon:'🏠',name:'Casa dos sonhos',check:()=>state.house>=3},
+ {id:'mayor',icon:'🏅',name:'Herói da vila',check:()=>state.mayorStep>=4}];
+function checkAch(){
+ ACH.forEach(a=>{
+  if(!state.ach[a.id]&&a.check()){
+   state.ach[a.id]=true;sound('win');
+   burst(player.position.x,1.6,player.position.z,0xffd76c,20,2.5,4);
+   toast(`Conquista: ${a.icon} ${a.name}!`);
+  }
+ });
+}
+function defaultState(){return {day:1,money:60,energy:100,slot:0,seeds:[8,3,2,2,0],bag:[0,0,0,0,0],
+ plots:Array.from({length:36},()=>({type:-1,age:0,water:false,ripe:0,dead:false})),
+ rows:4,camMode:0,weather:'sol',eggPos:[],fed:false,aspersor:false,adubo:0,tut:0,goalIdx:0,muted:false,house:1,bait:3,
+  tools:{hoe:0,can:0,scythe:0,axe:0},prices:[1,1,1,1,1],dishes:{salad:0,soup:0,juice:0},
+  wood:0,wine:0,cellar:[null,null,null],chest:{bag:[0,0,0,0,0],wine:0,wood:0},
+  outfit:{skin:0,shirt:0,hat:0},trees:null,mayorStep:0,kid1Day:0,kid2Day:0,tomeFished:0,
+  vehOwn:{cart:false,bike:false,boat:false},veh:{cart:{x:-3,z:-13},bike:{x:-1,z:-12.5},boat:{x:19,z:-10}},hay:100,paint:0,
+ ore:{copper:0,iron:0,gold:0},rocks:[3,3,3,3,4],fish:{lambari:0,tilapia:0,bagre:0,dourado:0},
+ npc:{vil:0,marta:0,tome:0},giftDay:{vil:0,marta:0,tome:0},festClaimed:0,profit:[0,0,0,0,0],forecast:['sol','nublado'],
+ quest:null,questProg:0,questsDone:0,seasonsSeen:[],ach:{},
+ stats:{colhidas:0,ganhas:0,ovos:0,noites:0,cooked:0,ores:0,fishCaught:0}};}
+function normPlot(p){
+ if(!p||!Number.isInteger(p.type)||p.type<-1||p.type>4)return {type:-1,age:0,water:false,ripe:0,dead:false};
+ return {type:p.type,age:Number.isFinite(p.age)&&p.age>=0?Math.floor(p.age):0,
+  water:!!p.water,ripe:Number.isFinite(p.ripe)&&p.ripe>=0?Math.floor(p.ripe):0,dead:!!p.dead};
+}
+function mergeState(s){
+ const d=defaultState(),n={...d};
+ if(Number.isFinite(s.day)&&s.day>=1)n.day=Math.floor(s.day);
+ if(Number.isFinite(s.money))n.money=Math.max(0,Math.floor(s.money));
+  if(Number.isFinite(s.energy)){const em=s.house>=3?160:s.house===2?130:100;n.energy=Math.max(0,Math.min(em,Math.floor(s.energy)));}
+ ['seeds','bag'].forEach(k=>{if(Array.isArray(s[k]))n[k]=d[k].map((v,i)=>Number.isFinite(s[k][i])&&s[k][i]>=0?Math.floor(s[k][i]):v);});
+ if(Array.isArray(s.plots))n.plots=d.plots.map((v,i)=>normPlot(s.plots[i]));
+ if([4,5,6].includes(s.rows))n.rows=s.rows;
+ if(['sol','nublado','chuva'].includes(s.weather))n.weather=s.weather;
+ if(Array.isArray(s.eggPos))n.eggPos=s.eggPos.filter(e=>Array.isArray(e)&&Number.isFinite(e[0])&&Number.isFinite(e[1])).slice(0,8);
+ n.fed=!!s.fed;n.aspersor=!!s.aspersor;
+ if(Number.isFinite(s.adubo)&&s.adubo>=0)n.adubo=Math.floor(s.adubo);
+ if(Number.isInteger(s.tut)&&s.tut>=0&&s.tut<=6)n.tut=s.tut;
+ else if(n.day>1||n.money!==60)n.tut=6;
+ if(Number.isInteger(s.goalIdx)&&s.goalIdx>=0&&s.goalIdx<=4)n.goalIdx=s.goalIdx;
+ if(s.won)n.goalIdx=Math.max(n.goalIdx,1);
+ if([0,1,2].includes(s.camMode))n.camMode=s.camMode;
+ n.muted=!!s.muted;
+ if(s.stats&&typeof s.stats==='object')for(const k of ['colhidas','ganhas','ovos','noites','cooked','ores','fishCaught'])
+  if(Number.isFinite(s.stats[k])&&s.stats[k]>=0)n.stats[k]=Math.floor(s.stats[k]);
+ if([1,2,3].includes(s.house))n.house=s.house;
+ if(Number.isFinite(s.bait)&&s.bait>=0)n.bait=Math.floor(s.bait);
+ if(s.ore&&typeof s.ore==='object')for(const k of ['copper','iron','gold'])
+  if(Number.isFinite(s.ore[k])&&s.ore[k]>=0)n.ore[k]=Math.floor(s.ore[k]);
+ if(Array.isArray(s.rocks))n.rocks=d.rocks.map((v,i)=>Number.isFinite(s.rocks[i])&&s.rocks[i]>=0?Math.min(4,Math.floor(s.rocks[i])):v);
+ if(s.fish&&typeof s.fish==='object')for(const k of ['lambari','tilapia','bagre','dourado'])
+  if(Number.isFinite(s.fish[k])&&s.fish[k]>=0)n.fish[k]=Math.floor(s.fish[k]);
+ if(s.npc&&typeof s.npc==='object')for(const k of ['vil','marta','tome'])
+  if(Number.isFinite(s.npc[k])&&s.npc[k]>=0)n.npc[k]=Math.min(10,s.npc[k]);
+ if(s.giftDay&&typeof s.giftDay==='object')for(const k of ['vil','marta','tome'])
+  if(Number.isFinite(s.giftDay[k]))n.giftDay[k]=Math.floor(s.giftDay[k]);
+ if(Number.isFinite(s.festClaimed))n.festClaimed=Math.floor(s.festClaimed);
+ if(Array.isArray(s.profit))n.profit=d.profit.map((v,i)=>Number.isFinite(s.profit[i])&&s.profit[i]>=0?Math.floor(s.profit[i]):v);
+ if(Array.isArray(s.forecast))n.forecast=[0,1].map(i=>['sol','nublado','chuva'].includes(s.forecast[i])?s.forecast[i]:'sol');
+ if([0,1,2].includes(s.slot))n.slot=s.slot;
+  if(s.tools&&typeof s.tools==='object')for(const k of ['hoe','can','scythe','axe'])
+   if([0,1,2,3].includes(s.tools[k]))n.tools[k]=s.tools[k];
+ if(Array.isArray(s.prices))n.prices=d.prices.map((v,i)=>Number.isFinite(s.prices[i])?Math.min(1.2,Math.max(0.5,s.prices[i])):v);
+ if(s.dishes&&typeof s.dishes==='object')for(const r of RECIPES)
+  if(Number.isFinite(s.dishes[r.id])&&s.dishes[r.id]>=0)n.dishes[r.id]=Math.floor(s.dishes[r.id]);
+ if(s.quest&&typeof s.quest==='object'&&['deliver','harvest','earn'].includes(s.quest.kind)&&Number.isFinite(s.quest.need))
+  n.quest={kind:s.quest.kind,crop:[0,1,2,3,4].includes(s.quest.crop)?s.quest.crop:0,
+   need:Math.max(1,Math.floor(s.quest.need)),reward:Number.isFinite(s.quest.reward)?Math.max(0,Math.floor(s.quest.reward)):50,
+   expires:Number.isFinite(s.quest.expires)?Math.floor(s.quest.expires):n.day+3};
+ if(Number.isFinite(s.questProg)&&s.questProg>=0)n.questProg=Math.floor(s.questProg);
+ if(Number.isFinite(s.questsDone)&&s.questsDone>=0)n.questsDone=Math.floor(s.questsDone);
+ if(Array.isArray(s.seasonsSeen))n.seasonsSeen=s.seasonsSeen.filter(x=>SEASONS.includes(x));
+  if(s.ach&&typeof s.ach==='object')for(const a of ACH)if(s.ach[a.id])n.ach[a.id]=true;
+  if(Number.isFinite(s.wood)&&s.wood>=0)n.wood=Math.floor(s.wood);
+  if(Number.isFinite(s.wine)&&s.wine>=0)n.wine=Math.floor(s.wine);
+  if(Array.isArray(s.cellar))n.cellar=[0,1,2].map(i=>s.cellar[i]&&Number.isFinite(s.cellar[i].d)?{d:Math.min(3,Math.max(0,Math.floor(s.cellar[i].d)))}:null);
+  if(s.chest&&typeof s.chest==='object'){
+   if(Array.isArray(s.chest.bag))n.chest.bag=d.chest.bag.map((v,i)=>Number.isFinite(s.chest.bag[i])&&s.chest.bag[i]>=0?Math.floor(s.chest.bag[i]):v);
+   if(Number.isFinite(s.chest.wine))n.chest.wine=Math.max(0,Math.floor(s.chest.wine));
+   if(Number.isFinite(s.chest.wood))n.chest.wood=Math.max(0,Math.floor(s.chest.wood));
+  }
+  if(s.outfit&&typeof s.outfit==='object'){
+   if([0,1,2].includes(s.outfit.skin))n.outfit.skin=s.outfit.skin;
+   if([0,1,2,3].includes(s.outfit.shirt))n.outfit.shirt=s.outfit.shirt;
+   if([0,1,2,3].includes(s.outfit.hat))n.outfit.hat=s.outfit.hat;
+  }
+  if(s.trees===null||Array.isArray(s.trees))n.trees=s.trees;
+  if(Number.isInteger(s.mayorStep)&&s.mayorStep>=0&&s.mayorStep<=4)n.mayorStep=s.mayorStep;
+  if(Number.isFinite(s.kid1Day))n.kid1Day=Math.floor(s.kid1Day);
+  if(Number.isFinite(s.kid2Day))n.kid2Day=Math.floor(s.kid2Day);
+  if(Number.isFinite(s.tomeFished))n.tomeFished=Math.floor(s.tomeFished);
+  if(s.vehOwn&&typeof s.vehOwn==='object')for(const k of ['cart','bike','boat'])n.vehOwn[k]=!!s.vehOwn[k];
+  if(s.veh&&typeof s.veh==='object')for(const k of ['cart','bike','boat'])
+   if(s.veh[k]&&Number.isFinite(s.veh[k].x)&&Number.isFinite(s.veh[k].z))n.veh[k]={x:THREE.MathUtils.clamp(s.veh[k].x,-44,44),z:THREE.MathUtils.clamp(s.veh[k].z,-38,38)};
+  if(Number.isFinite(s.hay)&&s.hay>=0)n.hay=Math.min(100,s.hay);
+  if([0,1,2,3].includes(s.paint))n.paint=s.paint;
+ n.plots.forEach((p,i)=>{if(i>=n.rows*6)n.plots[i]={type:-1,age:0,water:false,ripe:0,dead:false};});
+ return n;
+}
+function saveKey(){return 'aurora-v2-slot'+state.slot;}
+function loadSlot(n){
+ const d=defaultState();d.slot=n;
+ const keys=n===0?['aurora-v2-slot0','aurora-v2','aurora-v1']:['aurora-v2-slot'+n];
+ for(const k of keys){
+  try{
+   const raw=localStorage.getItem(k);
+   if(raw){const s=JSON.parse(raw);if(s&&typeof s==='object'){const m=mergeState(s);m.slot=n;return m;}}
+  }catch{}
+ }
+ return d;
+}
+let state=loadSlot(0);
+if(!state.quest){state.quest=genQuest();state.questProg=0;}
+let saveWarned=false;
+function save(){
+ try{localStorage.setItem(saveKey(),JSON.stringify(state))}
+ catch{if(!saveWarned){saveWarned=true;toast('O navegador não permitiu salvar o progresso.');}}
+}
+const scene=new THREE.Scene();
+scene.background=new THREE.Color(0xb8dbd0);
+scene.fog=new THREE.Fog(0xb8dbd0,60,150);
+const camera=new THREE.PerspectiveCamera(42,innerWidth/innerHeight,.1,300);
+const renderer=new THREE.WebGLRenderer({antialias:true});
+renderer.setSize(innerWidth,innerHeight);
+renderer.setPixelRatio(Math.min(devicePixelRatio,1.5));
+renderer.shadowMap.enabled=true;
+renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+renderer.outputColorSpace=THREE.SRGBColorSpace;
+document.body.prepend(renderer.domElement);
+const hemi=new THREE.HemisphereLight(0xfff7df,0x698550,2.4);scene.add(hemi);
+const sun=new THREE.DirectionalLight(0xffe3ab,3);
+sun.position.set(-12,25,10);sun.castShadow=true;
+sun.shadow.mapSize.set(2048,2048);
+Object.assign(sun.shadow.camera,{left:-30,right:30,top:30,bottom:-30});
+sun.shadow.normalBias=.03;scene.add(sun);
+const materials=new Map();
+function mat(c){
+ if(!materials.has(c))materials.set(c,new THREE.MeshStandardMaterial({color:c,roughness:.9}));
+ return materials.get(c);
+}
+const geoCache=new Map();
+function getGeo(key,make){
+ let g=geoCache.get(key);
+ if(!g){g=make();geoCache.set(key,g)}
+ return g;
+}
+const q3=n=>Math.round(n*1000)/1000;
+function box(w,h,d,c,x,y,z,parent=scene){
+ const m=new THREE.Mesh(getGeo(`b|${q3(w)},${q3(h)},${q3(d)}`,()=>new THREE.BoxGeometry(w,h,d)),mat(c));
+ m.position.set(x,y,z);m.castShadow=true;m.receiveShadow=true;parent.add(m);return m;
+}
+function ball(r,c,x,y,z,parent=scene,detail=1){
+ const m=new THREE.Mesh(getGeo(`s|${q3(r)}|${detail}`,()=>new THREE.IcosahedronGeometry(r,detail)),mat(c));
+ m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m;
+}
+function cone(r,h,c,x,y,z,parent=scene,n=7){
+ const m=new THREE.Mesh(getGeo(`c|${q3(r)},${q3(h)}|${n}`,()=>new THREE.ConeGeometry(r,h,n)),mat(c));
+ m.position.set(x,y,z);m.castShadow=true;parent.add(m);return m;
+}
+const ground=box(92,.8,80,0x7ea961,0,-.5,0);
+box(92,.25,80,0x9b7754,0,-1,0);
+box(3,.035,35,0xd9c18c,6,-.045,1);
+box(21,.04,2.8,0xd9c18c,-2,-.02,-7);
+box(9,.04,3,0xd9c18c,11,-.04,6);
+// Estradas do mapa 4x (+20% de velocidade).
+for(let x=-44;x<=44;x+=4)box(4,.04,3.2,0xd9c18c,x,-.03,2);
+for(let z=-36;z<=32;z+=4)box(3.2,.04,4,0xd9c18c,24,-.03,z);
+function onRoad(x,z){return Math.abs(z-2)<1.7||Math.abs(x-24)<1.7;}
+// Casa.
+box(6,3.8,4.5,0xf0d5a0,-8,1.9,-11);
+const roof=cone(5,2.7,0xa95440,-8,4.9,-11,scene,4);
+roof.rotation.y=Math.PI/4;
+box(1.25,2.3,.15,0x75533c,-8,1.15,-8.7);
+const winMat=new THREE.MeshStandardMaterial({color:0x9fd8d4,roughness:.4,emissive:0xffca7a,emissiveIntensity:0});
+for(const x of [-10,-6]){
+ const w=new THREE.Mesh(getGeo('winbox',()=>new THREE.BoxGeometry(1.05,1.1,.16)),winMat);
+ w.position.set(x,2,-8.7);scene.add(w);
+ box(1.25,.13,.3,0xfdf0cc,x,1.4,-8.65);
+}
+box(6.6,.18,5.1,0x8a5a3c,-8,3.62,-11);
+box(1,2,1,0xa08068,-6,5,-11.5);
+box(6.8,.3,1.3,0xb88c61,-8,.1,-8);
+// Barraca.
+box(4.5,1.25,2,0xa9794d,11,.63,6);
+for(const x of [8.8,13.2])box(.15,3,.15,0x755237,x,1.5,6);
+const stallStrips=[];
+for(let i=0;i<6;i++)
+ stallStrips.push(box(.78,.18,3.2,i%2?0xffe7ac:0xc96c50,9.05+i*.78,3,6));
+for(let i=0;i<8;i++)ball(.23,i%2?0xe7ae43:0xcf614a,9.5+i*.43,1.48,6);
+// Caixas de produtos ao lado da barraca.
+box(.7,.45,.7,0x8a6238,13.9,.22,7.6);
+ball(.16,0xf3a13c,13.7,.55,7.5);ball(.16,0xe96750,14.05,.55,7.6);ball(.14,0xf2d14e,13.9,.55,7.8);
+box(.7,.45,.7,0x8a6238,8.1,.22,7.4);
+ball(.14,0xe84a5f,8,.55,7.3);ball(.14,0xe84a5f,8.25,.55,7.5);
+function label(text,x,y,z){
+ const c=document.createElement('canvas');c.width=512;c.height=128;
+ const ctx=c.getContext('2d');ctx.fillStyle='#2b473a';
+ if(ctx.roundRect){ctx.beginPath();ctx.roundRect(0,0,512,128,24);ctx.fill();}
+ else{ctx.fillRect(0,0,512,128);}
+ ctx.fillStyle='#fff1c9';ctx.font='bold 44px sans-serif';ctx.textAlign='center';
+ ctx.fillText(text,256,82);
+ const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:new THREE.CanvasTexture(c)}));
+ sprite.position.set(x,y,z);sprite.scale.set(4.8,1.2,1);scene.add(sprite);
+}
+label('MERCADO',11,4.2,6);label('LAR DOCE LAR',-8,6.8,-11);
+// Lago.
+const lake=new THREE.Mesh(new THREE.CylinderGeometry(4.4,4.4,.12,40),
+ new THREE.MeshStandardMaterial({color:0x68b9c3,roughness:.25,metalness:.15}));
+lake.scale.z=.7;lake.position.set(14,-.035,-10);scene.add(lake);
+for(let i=0;i<18;i++){
+ const a=i/18*Math.PI*2;
+ const rock=ball(.5,0xa5ad91,14+Math.cos(a)*4.6,.12,-10+Math.sin(a)*3.3);
+ rock.scale.y=.55;
+}
+// Vegetação determinística (rastreada p/ corte).
+let randSeed=47;
+function rand(){randSeed=(randSeed*16807)%2147483647;return (randSeed-1)/2147483646}
+const treeData=[];
+for(let i=0;i<38;i++){
+ const x=rand()*42-21,z=rand()*36-18;
+ if((x>-14&&x<18&&z>-15&&z<13))continue;
+ treeData.push({x,z});
+}
+for(let i=0;i<26;i++){
+ const x=-44+rand()*18,z=-36+rand()*70;
+ if(x>-12&&z>-16&&z<14)continue;
+ treeData.push({x,z,pine:z<-20});
+}
+const treeMeshes=[];
+treeData.forEach(t=>{
+ const g=new THREE.Group();g.position.set(t.x,0,t.z);scene.add(g);
+ if(t.pine){box(.4,1.6,.4,0x6b4a2f,0,.8,0,g);cone(1.3,2.2,0x3d6b3f,0,2.4,0,g,7);cone(.9,1.6,0xdfe8ea,0,3.4,0,g,7);}
+ else{box(.5,2,.5,0x806347,0,.9,0,g);ball(1.55,0x497b47,0,2.7,0,g);ball(1.1,0x68954c,-.4,3.6,0,g);}
+ const stump=new THREE.Mesh(getGeo('stump',()=>new THREE.CylinderGeometry(.3,.35,.3,8)),mat(0x6b4a2f));
+ stump.position.y=.15;stump.visible=false;stump.castShadow=true;g.add(stump);
+ treeMeshes.push({g,stump});
+});
+if(!Array.isArray(state.trees)||state.trees.length!==treeData.length)state.trees=treeData.map(()=>true);
+function syncTrees(){treeMeshes.forEach((t,i)=>{const a=state.trees[i];t.g.children.forEach(c=>{if(c!==t.stump)c.visible=a;});t.stump.visible=!a;});}
+syncTrees();
+function nearestTree(){
+ let bi=-1,bd=2.6;
+ treeData.forEach((t,i)=>{
+  if(!state.trees[i])return;
+  const d=Math.hypot(player.position.x-t.x,player.position.z-t.z);
+  if(d<bd){bd=d;bi=i;}
+ });
+ return bi;
+}
+for(let i=0;i<100;i++){
+ const x=rand()*42-21,z=rand()*36-18;
+ if(x>-14&&x<17&&z>-15&&z<12)continue;
+ cone(.13,.45,0x537d45,x,.15,z);
+ if(i%3===0)ball(.12,i%2?0xffd16c:0xf6d8bf,x,.4,z);
+}
+// Cerca.
+for(let i=0;i<18;i++){
+ const x=-21+i*2.45;
+ box(.15,1.2,.15,0xd8c59b,x,.55,17.5);
+ if(i<17)box(2.45,.13,.13,0xd8c59b,x+1.22,.8,17.5);
+}
+// Cerca do perímetro (mapa 4x).
+for(let x=-45;x<=45;x+=3){box(.15,1.2,.15,0xb09a72,x,.55,-38.5);box(.15,1.2,.15,0xb09a72,x,.55,38.5);}
+for(let z=-38.5;z<=38.5;z+=3){box(.15,1.2,.15,0xb09a72,-45.5,.55,z);box(.15,1.2,.15,0xb09a72,45.5,.55,z);}
+// Vila a leste: praça, fonte, casas.
+box(10,.1,10,0xcbb891,30,0,8);
+const fountain=new THREE.Mesh(new THREE.CylinderGeometry(1.6,1.8,.7,16),mat(0x9a9aa2));
+fountain.position.set(30,.35,8);fountain.castShadow=true;scene.add(fountain);
+const fw=new THREE.Mesh(new THREE.CylinderGeometry(1.1,1.1,.5,16),mat(0x68b9c3));
+fw.position.set(30,.6,8);scene.add(fw);
+box(.5,3,.5,0x8a8a92,30,1.5,8);
+miniHouse(25,-1,0xe8cf9e);miniHouse(35,-1,0xdfbf8e);miniHouse(30,14,0xe8d5a8);
+label('VILA',30,5,8);
+// Moinho de vento animado.
+box(2.2,5,2.2,0xe8dcc0,36,2.5,14);
+const millRoof2=cone(1.9,1.4,0xa95440,36,5.7,14,scene,4);millRoof2.rotation.y=Math.PI/4;
+const millBlades2=new THREE.Group();millBlades2.position.set(36,4.6,15.15);scene.add(millBlades2);
+for(let i=0;i<4;i++){
+ const pivot=new THREE.Group();pivot.rotation.z=i*Math.PI/2;millBlades2.add(pivot);
+ box(.35,2.2,.06,0xfdf0cc,0,1.3,0,pivot);
+}
+// Prefeito e crianças.
+function smallNpc(c1){
+ const g=new THREE.Group();g.scale.setScalar(.7);scene.add(g);
+ box(.55,.75,.35,c1,0,.85,0,g);
+ ball(.3,0xe8b98a,0,1.5,0,g);
+ return g;
+}
+const mayor=smallNpc(0x8a2a3a);mayor.position.set(30,0,6.2);
+box(.5,.14,.5,0xffd34e,0,1.78,0,mayor);
+const kid1=smallNpc(0xc96c50);kid1.position.set(27.5,0,10);
+const kid2=smallNpc(0x5f7fa8);kid2.position.set(32.5,0,10);
+// Praia: areia, lago grande, guarda-sol.
+const sand=new THREE.Mesh(new THREE.CylinderGeometry(10,10,.1,28),mat(0xe8d5a0));
+sand.position.set(30,-.04,-14);sand.receiveShadow=true;scene.add(sand);
+const lake2=new THREE.Mesh(new THREE.CylinderGeometry(7,7,.12,28),
+ new THREE.MeshStandardMaterial({color:0x5fa8c9,roughness:.2,metalness:.2}));
+lake2.position.set(30,-.02,-14);scene.add(lake2);
+box(.14,2.2,.14,0x8a5a3c,33,.9,-11);
+cone(1.4,.7,0xe84a5f,33,2.1,-11,scene,8);
+for(let i=0;i<3;i++)ball(.12,0xe08a3c,27+i*.7,.1,-9+i*.5);
+label('PRAIA',30,4,-14);
+// Neve: colinas e boneco.
+for(const [hx,hz,hr] of [[-5,-30,4],[5,-32,5],[-15,-28,3.5],[12,-30,4]])ball(hr,0xeef3f6,hx,0,hz);
+ball(.5,0xffffff,-5,.45,-24.5);ball(.35,0xffffff,-5,1.05,-24.5);
+cone(.08,.35,0xe08a3c,-5,1.05,-24.1,scene,6).rotation.x=Math.PI/2;
+label('NEVE',0,4,-30);
+// Totens de viagem.
+const TOTEMS=[{n:'Fazenda',x:2,z:8},{n:'Floresta',x:-16,z:-10},{n:'Vila',x:28,z:8},{n:'Praia',x:28,z:-12}];
+const travMat=new THREE.MeshStandardMaterial({color:0x6ec6f2,emissive:0x6ec6f2,emissiveIntensity:.8});
+const travCrystals=[];
+TOTEMS.forEach(t=>{
+ box(.5,1.6,.5,0x6b6f78,t.x,.8,t.z);
+ const c=new THREE.Mesh(getGeo('trav',()=>new THREE.IcosahedronGeometry(.3,0)),travMat);
+ c.position.set(t.x,2.1,t.z);scene.add(c);travCrystals.push(c);
+ label(t.n.toUpperCase(),t.x,3,t.z);
+});
+function regionOf(x,z){
+ if(inInterior)return inInterior==='shop'?'Loja':'Casa';
+ if(z<=-22)return 'Neve';
+ if(x>=22&&z<=-5)return 'Praia';
+ if(x>=22&&z>-5)return 'Vila';
+ if(x<=-12)return 'Floresta';
+ return 'Fazenda';
+}
+// Canteiros.
+const plots=[];
+for(let row=0;row<6;row++)for(let col=0;col<6;col++){
+ const x=-10+col*2.05,z=-3+row*2.05;
+ const soil=box(1.8,.15,1.8,0x8d6143,x,.025,z);
+ const plants=new THREE.Group();scene.add(plants);
+ plots.push({x,z,soil,plants});
+}
+function plotActive(i){return i<state.rows*6;}
+function redraw(){
+ plots.forEach((p,i)=>{
+  const s=state.plots[i];
+  p.soil.visible=plotActive(i);
+  if(!plotActive(i)){while(p.plants.children.length)p.plants.remove(p.plants.children[0]);return}
+  p.soil.material=mat(s.water?0x594838:0x8d6143);
+  // Geometrias são compartilhadas via cache: só remove, nunca dispose.
+  while(p.plants.children.length)p.plants.remove(p.plants.children[0]);
+  if(s.type<0)return;
+  if(s.dead){
+   for(const dx of [-.42,.42])for(const dz of [-.42,.42]){
+    box(.07,.3,.07,0x6b5b3e,p.x+dx,.28,p.z+dz,p.plants);
+    const tuft=ball(.16,0x8a8266,p.x+dx+.1,.45,p.z+dz,p.plants);
+    tuft.scale.set(1,.5,.8);
+   }
+   return;
+  }
+  const c=crops[s.type],need=effDays(s.type),st=s.age>=need?2:(s.age<=0?0:1);
+  drawCrop(p.x,p.z,s.type,st,p.plants);
+ });
+}
+function drawCrop(px,pz,type,stage,parent){
+ // 4 mudas por canteiro; visual próprio por cultura e estágio.
+ const green=0x4c8041,leaf=0x6c9d46;
+ for(const dx of [-.42,.42])for(const dz of [-.42,.42]){
+  const x=px+dx,z=pz+dz;
+  if(stage===0){
+   box(.06,.18,.06,green,x,.22,z,parent);
+   ball(.08,leaf,x-.07,.3,z,parent);
+   ball(.08,leaf,x+.07,.3,z,parent);
+   continue;
+  }
+  if(type===0){ // Cenoura: folhas altas + topo laranja.
+   const h=stage===2?.75:.5;
+   for(const o of [-.09,0,.09])box(.05,h,.05,green,x+o,.13+h/2,z,parent);
+   ball(.1,leaf,x,.13+h,z,parent);
+   if(stage===2)ball(.12,0xf3a13c,x,.2,z,parent);
+  }else if(type===1){ // Tomate: arbusto + frutos vermelhos.
+   ball(.2,leaf,x,.3,z,parent);ball(.16,0x59873f,x+.12,.42,z,parent);
+   if(stage===2){ball(.12,0xe96750,x-.1,.42,z,parent);ball(.12,0xe96750,x+.14,.3,z,parent);ball(.1,0xe96750,x,.55,z,parent);}
+  }else if(type===2){ // Abóbora: folhas largas + moranga.
+   const lf=ball(.3,leaf,x,.25,z,parent);lf.scale.set(1,.45,1);
+   if(stage===2){
+    ball(.3,0xe99730,x,.35,z,parent);
+    box(.08,.16,.08,0x6b4a2f,x,.62,z,parent);
+   }
+  }else if(type===3){ // Milho: colmo alto + espiga.
+   const h=stage===2?1.15:.7;
+   box(.09,h,.09,green,x,.13+h/2,z,parent);
+   const l1=box(.3,.05,.08,leaf,x-.14,.13+h*.6,z,parent);l1.rotation.z=.4;
+   const l2=box(.3,.05,.08,leaf,x+.14,.13+h*.45,z,parent);l2.rotation.z=-.4;
+   if(stage===2){
+    const cob=ball(.14,0xf2d14e,x+.12,.13+h*.55,z,parent);cob.scale.set(1,1.6,1);
+    ball(.07,0x8a6a3a,x,.13+h+.05,z,parent);
+   }
+  }else{ // Morango: touceira baixa + frutinhos.
+   ball(.14,leaf,x,.22,z,parent);ball(.11,leaf,x+.12,.28,z,parent);ball(.11,0x59873f,x-.12,.28,z,parent);
+   if(stage===2){ball(.09,0xe84a5f,x+.05,.36,z,parent);ball(.09,0xe84a5f,x-.09,.34,z,parent);ball(.08,0xe84a5f,x+.14,.24,z,parent);}
+  }
+ }
+}
+redraw();
+// Personagem articulado (roupas customizáveis).
+const player=new THREE.Group();scene.add(player);player.position.set(3,0,6);
+const skinMat=new THREE.MeshStandardMaterial({color:0xf2c79d,roughness:.8});
+const shirtMat=new THREE.MeshStandardMaterial({color:0x547b97,roughness:.9});
+const hatMat=new THREE.MeshStandardMaterial({color:0xe4bd71,roughness:.9});
+function pbox(w,h,d,mt,x,y,z){const m=new THREE.Mesh(getGeo(`pb|${q3(w)},${q3(h)},${q3(d)}`,()=>new THREE.BoxGeometry(w,h,d)),mt);m.position.set(x,y,z);m.castShadow=true;player.add(m);return m;}
+pbox(.65,.7,.4,shirtMat,0,.95,0);
+const headM=new THREE.Mesh(getGeo('phead',()=>new THREE.IcosahedronGeometry(.34,1)),skinMat);
+headM.position.set(0,1.55,0);headM.castShadow=true;player.add(headM);
+const hatBrim=pbox(1,.12,.85,hatMat,0,1.82,0);
+pbox(.62,.28,.56,hatMat,0,1.98,0);
+const strawBrim=pbox(1.5,.08,1.2,hatMat,0,1.8,0);strawBrim.visible=false;
+const scarf=pbox(.5,.18,.5,new THREE.MeshStandardMaterial({color:0xc0392b,roughness:.9}),0,1.32,0);scarf.visible=false;
+function limb(w,h,d,c,px,py,mt){
+ const g=new THREE.Group();g.position.set(px,py,0);player.add(g);
+ const m=new THREE.Mesh(getGeo(`limb|${q3(w)},${q3(h)},${q3(d)}`,()=>new THREE.BoxGeometry(w,h,d)),mt||mat(c));
+ m.position.y=-h/2;m.castShadow=true;g.add(m);return g;
+}
+const legL=limb(.22,.5,.25,0x5a5146,-.18,.6);
+const legR=limb(.22,.5,.25,0x5a5146,.18,.6);
+const armL=limb(.18,.58,.2,0xf2c79d,-.44,1.25,skinMat);
+const armR=limb(.18,.58,.2,0xf2c79d,.44,1.25,skinMat);
+// Ferramentas na mão direita (visíveis conforme o contexto).
+const toolHoe=new THREE.Group();toolHoe.position.set(0,-.55,.1);armR.add(toolHoe);
+box(.06,.7,.06,0x7a5c3e,0,-.1,0,toolHoe);
+box(.22,.06,.14,0x9aa3ad,0,-.42,.06,toolHoe);
+const toolCan=new THREE.Group();toolCan.position.set(0,-.55,.12);armR.add(toolCan);
+box(.22,.2,.24,0x5f8fa8,0,-.1,0,toolCan);
+box(.06,.06,.3,0x5f8fa8,0,-.05,.24,toolCan);
+toolHoe.visible=toolCan.visible=false;
+// Galinhas.
+const chickens=[];
+for(let i=0;i<4;i++){
+ const g=new THREE.Group();scene.add(g);
+ ball(.32,0xfff2cf,0,.42,0,g);
+ ball(.2,0xfff2cf,0,.66,.23,g);
+ cone(.09,.22,0xe0a247,0,.64,.43,g,4).rotation.x=Math.PI/2;
+ box(.12,.15,.1,0xc85b48,0,.88,.23,g);
+ chickens.push(g);
+}
+// ===== Aldeão, cachorro, patos, borboletas, vaga-lumes e clima visível =====
+// Aldeão feirante atrás do balcão.
+const vil=new THREE.Group();vil.position.set(11,0,4.7);scene.add(vil);
+box(.55,.75,.35,0x7a9e5f,0,.85,0,vil);
+box(.4,.4,.06,0xfff2df,0,.85,.2,vil);
+ball(.3,0xe8b98a,0,1.5,0,vil);
+box(.5,.18,.5,0x5a3d24,0,1.72,0,vil);
+// Cachorro que segue o jogador.
+const dog=new THREE.Group();dog.position.set(4,0,7);scene.add(dog);
+box(.5,.28,.28,0xa8763e,0,.3,0,dog);
+ball(.17,0xa8763e,0,.48,.28,dog);
+cone(.07,.14,0x7a5228,-.09,.62,.28,dog,4);cone(.07,.14,0x7a5228,.09,.62,.28,dog,4);
+const dogTail=box(.08,.08,.3,0xa8763e,0,.4,-.3,dog);
+// Patos no lago.
+const ducks=[];
+for(let i=0;i<2;i++){
+ const d=new THREE.Group();scene.add(d);
+ const bd=ball(.16,0xffe9a8,0,.12,0,d);bd.scale.set(1,.8,1.2);
+ ball(.1,0xffe9a8,0,.26,.16,d);
+ cone(.05,.12,0xe08a3c,0,.25,.28,d,4).rotation.x=Math.PI/2;
+ ducks.push(d);
+}
+// Borboletas (dia).
+const butterflies=[];
+for(let i=0;i<3;i++){
+ const b=new THREE.Group();scene.add(b);
+ ball(.05,0x5a3d24,0,0,0,b);
+ const wmat=mat(i%2?0xf2a0c0:0xa0c8f2);
+ const wl=new THREE.Mesh(getGeo('bfly',()=>new THREE.BoxGeometry(.16,.02,.12)),wmat);
+ wl.position.x=-.09;b.add(wl);
+ const wr=new THREE.Mesh(getGeo('bfly',()=>new THREE.BoxGeometry(.16,.02,.12)),wmat);
+ wr.position.x=.09;b.add(wr);
+ butterflies.push({g:b,wl,wr,cx:[-15,15,0][i],cz:[8,2,14][i],ph:i*2.1});
+}
+// Vaga-lumes (noite).
+const FF=36;
+const fGeo=new THREE.BufferGeometry();
+const fPos=new Float32Array(FF*3),fBase=new Float32Array(FF*3),fPh=new Float32Array(FF);
+for(let i=0;i<FF;i++){
+ fBase[i*3]=-12+Math.random()*16;fBase[i*3+1]=.5+Math.random()*1.6;fBase[i*3+2]=-6+Math.random()*16;
+ fPh[i]=Math.random()*6.28;
+}
+fGeo.setAttribute('position',new THREE.BufferAttribute(fPos,3));
+const fMat=new THREE.PointsMaterial({color:0xd8ff8a,size:.18,transparent:true,opacity:0,depthWrite:false});
+const fireflies=new THREE.Points(fGeo,fMat);fireflies.frustumCulled=false;scene.add(fireflies);
+// Poças (chuva) e neve acumulada (inverno).
+const puddleGroup=new THREE.Group();scene.add(puddleGroup);puddleGroup.visible=false;
+[[6,1,1],[-2,-7,1.2],[11,0,.9],[-12,4,1.1],[3,12,.8]].forEach(([x,z,r])=>{
+ const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r*.9,.04,18),
+  new THREE.MeshStandardMaterial({color:0x7fc4d4,roughness:.1,metalness:.3}));
+ m.position.set(x,.03,z);puddleGroup.add(m);
+});
+const snowGroup=new THREE.Group();scene.add(snowGroup);snowGroup.visible=false;
+[[-16,-12,1.6],[-4,8,1.3],[8,-4,1.5],[16,6,1.7],[-12,12,1.2],[4,-14,1.4],[18,-2,1.2],[-6,14,1.3]].forEach(([x,z,r])=>{
+ const m=new THREE.Mesh(new THREE.CylinderGeometry(r,r,.03,16),
+  new THREE.MeshStandardMaterial({color:0xf2f5f7,roughness:.9}));
+ m.position.set(x,.025,z);snowGroup.add(m);
+});
+// Folhas caindo (outono).
+const LV=60;
+const lGeo=new THREE.BufferGeometry();
+const lPos=new Float32Array(LV*3);
+for(let i=0;i<LV;i++){lPos[i*3]=Math.random()*40-20;lPos[i*3+1]=Math.random()*6;lPos[i*3+2]=Math.random()*36-18;}
+lGeo.setAttribute('position',new THREE.BufferAttribute(lPos,3));
+const leaves=new THREE.Points(lGeo,new THREE.PointsMaterial({color:0xd88a3c,size:.2,transparent:true,opacity:.9,depthWrite:false}));
+leaves.frustumCulled=false;leaves.visible=false;scene.add(leaves);
+function updateLeaves(dt){
+ for(let i=0;i<LV;i++){
+  lPos[i*3+1]-=dt*1.2;
+  lPos[i*3]+=Math.sin(time*2+i)*dt*.9;
+  if(lPos[i*3+1]<0){lPos[i*3+1]=6;lPos[i*3]=Math.random()*40-20;lPos[i*3+2]=Math.random()*36-18;}
+ }
+ lGeo.attributes.position.needsUpdate=true;
+}
+// Quadro de missões.
+box(.16,2.2,.16,0x6b4a2f,6.2,1.1,9.5);
+box(.16,2.2,.16,0x6b4a2f,6.8,1.1,9.5);
+box(1.5,1,.12,0x8a6238,6.5,1.9,9.5);
+box(.95,.6,.02,0xfff2cf,6.5,1.85,9.43);
+label('MISSÕES',6.5,3,9.5);
+// Caldeirão da cozinha.
+const pot=new THREE.Mesh(new THREE.CylinderGeometry(.5,.4,.5,14),mat(0x3a3a3a));
+pot.position.set(-4,.45,-6);pot.castShadow=true;scene.add(pot);
+const fireMat=new THREE.MeshStandardMaterial({color:0xe08a3c,emissive:0xff7a2a,emissiveIntensity:1.4});
+const fire=cone(.28,.45,0xe08a3c,-4,.22,-6);
+fire.material=fireMat;
+for(const [lx,lz] of [[-.4,-.3],[.4,-.3],[0,.4]])box(.1,.5,.1,0x4a3b2c,-4+lx,.25,-6+lz);
+label('COZINHA',-4,2.1,-6);
+// ===== Expansão do mapa: mina, forja, cais, ponte, vila e moinho =====
+// Mina a oeste.
+ball(1.8,0x5a5a60,-20.5,1,-15);
+ball(1.4,0x6a6a72,-19,0.8,-16.5);
+ball(1.2,0x4a4a52,-20.8,0.7,-13.2);
+box(2.2,2.6,.4,0x14141c,-19.5,1.2,-14.2);
+label('MINA',-19,4.4,-14.5);
+const torchFlames=[];
+function torch(x,z){
+ box(.12,1.6,.12,0x4a3b2c,x,.8,z);
+ const f=cone(.14,.3,0xe08a3c,x,1.75,z);
+ f.material=fireMat;torchFlames.push(f);
+}
+torch(-18,-12.5);torch(-16.5,-15);
+// Rochas mineráveis.
+const rockMeshes=[];
+ROCKS.forEach(rk=>{
+ const g=new THREE.Group();g.position.set(rk.x,0,rk.z);scene.add(g);
+ const st=ball(.55,0x8a8a92,0,.4,0,g);st.scale.y=.8;
+ for(let k=0;k<3;k++){
+  const cr=cone(.12,.35,ORES[rk.t].color,(k-1)*.3,.85,(k%2?.2:-.15),g,5);
+  cr.rotation.z=(k-1)*.25;
+ }
+ rockMeshes.push(g);
+});
+function syncRocks(){rockMeshes.forEach((g,i)=>g.visible=state.rocks[i]>0);}
+syncRocks();
+// Forja.
+box(1.4,.8,1,0x7a7a82,16.5,.4,-2);
+box(.5,1.6,.5,0x5a5a60,16.9,1.4,-2.2);
+const forgeFire=box(.7,.25,.6,0xe08a3c,16.5,.95,-2);forgeFire.material=fireMat;
+box(.7,.25,.4,0x3d4c59,15.4,.55,-1.2);
+box(.12,.4,.12,0x3d4c59,15.2,.2,-1.2);box(.12,.4,.12,0x3d4c59,15.6,.2,-1.2);
+label('FORJA',16.5,3,-2);
+// Cais de pesca + ponte decorativa no lago.
+for(let i=0;i<6;i++)box(.85,.1,1.3,0x9a7448,17.6+i*.62,.06,-10);
+box(.14,1,.14,0x6b4a2f,17.6,.5,-10.5);box(.14,1,.14,0x6b4a2f,20.6,.5,-9.5);
+const fishRipple=new THREE.Mesh(new THREE.RingGeometry(.3,.42,20),
+ new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.6,side:THREE.DoubleSide}));
+fishRipple.rotation.x=-Math.PI/2;fishRipple.position.set(19.3,.06,-10);scene.add(fishRipple);
+for(let i=0;i<9;i++)box(1,.08,1.1,0x9a7448,9.5+i*1.05,.35+Math.sin(i/8*Math.PI)*.55,-10);
+box(.14,1.4,.14,0x6b4a2f,9.3,.6,-10.5);box(.14,1.4,.14,0x6b4a2f,18.7,.6,-9.5);
+// Vila ao leste (cenário) e moinho animado.
+function miniHouse(x,z,c){
+ box(3,2.2,2.6,c,x,1.1,z);
+ const r=cone(2.6,1.4,0xa95440,x,2.9,z,scene,4);r.rotation.y=Math.PI/4;
+ box(.7,1.2,.1,0x75533c,x,.6,z+1.32);
+}
+miniHouse(21.5,-3,0xe8cf9e);miniHouse(22,1.5,0xdfbf8e);
+label('VILA →',20,3.4,2.5);
+box(2.2,5,2.2,0xe8dcc0,-12,2.5,14.5);
+const millRoof=cone(1.9,1.4,0xa95440,-12,5.7,14.5,scene,4);millRoof.rotation.y=Math.PI/4;
+const millBlades=new THREE.Group();millBlades.position.set(-12,4.6,15.65);scene.add(millBlades);
+for(let i=0;i<4;i++){
+ const pivot=new THREE.Group();pivot.rotation.z=i*Math.PI/2;millBlades.add(pivot);
+ box(.35,2.2,.06,0xfdf0cc,0,1.3,0,pivot);
+}
+// Marta e Tomé.
+function villagerMesh(c1,c2){
+ const g=new THREE.Group();scene.add(g);
+ box(.55,.75,.35,c1,0,.85,0,g);
+ ball(.3,0xe8b98a,0,1.5,0,g);
+ box(.5,.16,.5,c2,0,1.74,0,g);
+ return g;
+}
+const marta=villagerMesh(0x9e6fa8,0x6f4a78);marta.position.set(-3.5,0,-9.5);
+const tome=villagerMesh(0x5f7fa8,0x3d4c59);tome.position.set(18,0,-7);
+box(.06,1.1,.06,0x7a5c3e,.4,.9,.2,tome);
+// Casa nível 2 e 3 (extras ocultos).
+const houseL2=new THREE.Group();scene.add(houseL2);
+box(3.4,2.4,3,0xe8cf9e,-3.2,1.2,-11,houseL2);
+const hr2=cone(2.8,1.5,0xa95440,-3.2,3.15,-11,houseL2,4);hr2.rotation.y=Math.PI/4;
+box(1.6,.3,.4,0x8a5a3c,-8,.9,-8.55,houseL2);
+ball(.14,0xe84a5f,-8.5,1.15,-8.55,houseL2);ball(.14,0xf2d14e,-7.5,1.15,-8.55,houseL2);
+const houseL3=new THREE.Group();scene.add(houseL3);
+box(4.4,.22,1.2,0x8a5a3c,-8,2.9,-8.3,houseL3);
+for(let i=0;i<5;i++)box(.12,.7,.12,0x8a5a3c,-9.8+i*.9,3.3,-7.8,houseL3);
+box(.3,1.6,.3,0xd9c18c,-8,4.4,-8.1,houseL3);
+ball(.2,0xffd34e,-8,5.3,-8.1,houseL3);
+function refreshHouse(){houseL2.visible=state.house>=2;houseL3.visible=state.house>=3;}
+refreshHouse();
+// Decoração de festival + presente.
+const festDecor=new THREE.Group();scene.add(festDecor);festDecor.visible=false;
+box(.14,3,.14,0x6b4a2f,7,1.5,3.2,festDecor);
+box(.14,3,.14,0x6b4a2f,15,1.5,3.2,festDecor);
+for(let i=0;i<9;i++){
+ const fl=box(.4,.5,.04,[0xe84a5f,0xf2d14e,0x6ec6f2,0x9fe870][i%4],7.4+i*.9,2.9-Math.sin(i/8*Math.PI)*.5,3.2,festDecor);
+ fl.rotation.z=(i%2?-.15:.15);
+}
+const festLampMat=new THREE.MeshStandardMaterial({color:0xfff2c9,emissive:0xffb36e,emissiveIntensity:1.5});
+for(const lx of [7,15]){
+ const lb=new THREE.Mesh(new THREE.SphereGeometry(.22,10,8),festLampMat);
+ lb.position.set(lx,3.1,3.2);festDecor.add(lb);
+}
+const present=new THREE.Group();present.position.set(13.8,0,8.6);scene.add(present);present.visible=false;
+box(.6,.6,.6,0xc0392b,0,.3,0,present);
+box(.66,.14,.66,0xf2d14e,0,.42,0,present);
+box(.14,.66,.66,0xf2d14e,0,.33,0,present);
+// Vitrine sazonal da loja.
+const vitrine=new THREE.Group();vitrine.position.set(8,0,8.5);scene.add(vitrine);
+const vitAutumn=new THREE.Group(),vitWinter=new THREE.Group(),vitSpring=new THREE.Group(),vitSummer=new THREE.Group();
+vitrine.add(vitAutumn,vitWinter,vitSpring,vitSummer);
+ball(.3,0xe99730,0,.3,0,vitAutumn);ball(.22,0xe99730,.4,.22,.2,vitAutumn);ball(.22,0xc96c50,-.4,.22,-.1,vitAutumn);
+ball(.4,0xffffff,0,.35,0,vitWinter);ball(.28,0xffffff,0,.85,0,vitWinter);
+cone(.07,.3,0xe08a3c,0,.85,.3,vitWinter,6).rotation.x=Math.PI/2;
+box(.5,.25,.3,0x8a5a3c,0,.15,0,vitSpring);
+ball(.12,0xe84a5f,-.15,.35,0,vitSpring);ball(.12,0xf2d14e,.05,.38,0,vitSpring);ball(.12,0xf2a0c0,.2,.34,0,vitSpring);
+box(.1,1.6,.1,0x8a5a3c,0,.8,0,vitSummer);
+cone(1,.5,0xf2d14e,0,1.7,0,vitSummer,8);
+// Ondas no lago.
+const waveRings=[];
+for(let i=0;i<2;i++){
+ const w=new THREE.Mesh(new THREE.RingGeometry(.9,1,26),
+  new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.3,side:THREE.DoubleSide}));
+ w.rotation.x=-Math.PI/2;w.position.set(14,.05,-10);scene.add(w);
+ waveRings.push({m:w,ph:i*.5});
+}
+// Brilho do lago + pássaros do amanhecer.
+const lakeGlint=new THREE.Mesh(new THREE.CircleGeometry(.5,20),
+ new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:.35}));
+lakeGlint.rotation.x=-Math.PI/2;lakeGlint.position.set(14,.04,-10);scene.add(lakeGlint);
+const birds=[];
+for(let i=0;i<2;i++){
+ const b=new THREE.Group();scene.add(b);b.visible=false;
+ const bd=cone(.09,.4,0x3a3a3a,0,0,0,b,5);bd.rotation.z=Math.PI/2;
+ const w1=box(.4,.03,.14,0x3a3a3a,-.2,0,0,b),w2=box(.4,.03,.14,0x3a3a3a,.2,0,0,b);
+ birds.push({g:b,w1,w2,ph:i*2.4});
+}
+// Vara de pesca na mão direita.
+const toolRod=new THREE.Group();toolRod.position.set(0,-.55,.1);armR.add(toolRod);
+const rodStick=box(.06,.9,.06,0x7a5c3e,0,-.2,.1,toolRod);rodStick.rotation.x=-.5;
+box(.02,.5,.02,0xdddddd,.12,-.55,.35,toolRod);
+ball(.05,0xe84a5f,.12,-.82,.35,toolRod);
+toolRod.visible=false;
+// ===== Veículos e garagem =====
+const cartMat=new THREE.MeshStandardMaterial({color:0xc96c50,roughness:.8});
+const bikeMat=new THREE.MeshStandardMaterial({color:0x6ec6f2,roughness:.6});
+const PAINTS=[0xc96c50,0x6ec6f2,0x7dd87d,0xffd34e];
+function applyPaint(){cartMat.color.setHex(PAINTS[state.paint]);bikeMat.color.setHex(PAINTS[(state.paint+1)%4]);}
+const cartG=new THREE.Group();scene.add(cartG);
+box(1.6,.15,1.1,0x7a5c3e,0,.75,0,cartG);
+box(1.6,.5,.12,0x7a5c3e,0,1,-.5,cartG);
+const cartSeat=box(1.2,.4,.5,0x8a5a3c,0,1,0,cartG);cartSeat.material=cartMat;
+const cartWheels=[];
+for(const [wx,wz] of [[-.85,.4],[.85,.4],[-.85,-.4],[.85,-.4]]){
+ const piv=new THREE.Group();piv.position.set(wx,.4,wz);cartG.add(piv);
+ const wh=new THREE.Mesh(getGeo('wheel',()=>new THREE.CylinderGeometry(.4,.4,.15,12)),mat(0x4a3b2c));
+ wh.rotation.z=Math.PI/2;wh.castShadow=true;piv.add(wh);
+ cartWheels.push(piv);
+}
+box(.6,.6,1.2,0x8a5a3c,0,1,1.7,cartG);
+box(.35,.5,.4,0x8a5a3c,0,1.5,2.4,cartG);
+for(const [lx,lz] of [[-.2,1.3],[.2,1.3],[-.2,2.1],[.2,2.1]])box(.14,.8,.14,0x6b4a2f,lx,.4,lz,cartG);
+box(.08,.08,1.2,0x6b4a2f,-.5,.9,.6,cartG);box(.08,.08,1.2,0x6b4a2f,.5,.9,.6,cartG);
+const bikeG=new THREE.Group();scene.add(bikeG);
+const bikeWheels=[];
+for(const wz of [-.55,.55]){
+ const wh=new THREE.Mesh(getGeo('bwheel',()=>new THREE.TorusGeometry(.4,.06,8,16)),mat(0x3a3a3a));
+ wh.position.set(0,.4,wz);wh.castShadow=true;bikeG.add(wh);bikeWheels.push(wh);
+}
+box(.08,.08,1.2,0x8a8a92,0,.7,0,bikeG);
+box(.08,.7,.08,0x8a8a92,0,.7,-.3,bikeG);
+box(.5,.08,.3,0x5a3d24,0,1,-.35,bikeG);
+const bikeBasket=box(.4,.3,.4,0x8a6238,0,.9,.7,bikeG);bikeBasket.material=bikeMat;
+box(.5,.06,.06,0x8a8a92,0,1.1,.5,bikeG);
+const boatG=new THREE.Group();scene.add(boatG);
+box(1.4,.4,2.6,0x7a5c3e,0,.3,0,boatG);
+box(1.5,.3,.2,0x6b4a2f,0,.55,1.2,boatG);box(1.5,.3,.2,0x6b4a2f,0,.55,-1.2,boatG);
+box(.5,.12,1.8,0x9a7448,0,.5,0,boatG);
+// Garagem.
+box(.2,2.4,3,0x9a7448,-1.6,1.2,-14);
+box(.2,2.4,3,0x8a6238,1.6,1.2,-14);
+box(3.4,2.4,.2,0x8a6238,0,1.2,-15.5);
+box(3.8,.2,3.6,0xa95440,0,2.6,-14);
+label('GARAGEM',0,3.6,-14);
+// ===== Interiores: casa, adega e loja (sem teto, câmera livre) =====
+function roomFloor(x,z,w,d){box(w,.2,d,0x9a7448,x,-.1,z);}
+function roomWall(x,z,w,d){box(w,3,d,0xe8d5a8,x,1.5,z);}
+// Casa (x 94-106, z 96-104).
+roomFloor(100,100,12,10);
+roomWall(100,95.9,12,.2);roomWall(94,100,.2,10);roomWall(106,100,.2,10);roomWall(100,104.1,12,.2);
+// Adega (x 94-106, z 84-92).
+roomFloor(100,88,12,10);
+roomWall(100,83.9,12,.2);roomWall(94,88,.2,10);roomWall(106,88,.2,10);roomWall(100,92.1,12,.2);
+// Loja (x 94-106, z 116-124).
+roomFloor(100,120,12,10);
+roomWall(100,115.9,12,.2);roomWall(94,120,.2,10);roomWall(106,120,.2,10);roomWall(100,124.1,12,.2);
+// Mobília da casa.
+box(2.2,.5,3,0x8a5a3c,100,.25,97.5);
+box(2,.35,2.8,0xfff2df,100,.6,97.5);
+box(1.2,.25,.7,0xffffff,100,.85,96.5);
+box(1.2,1.8,.6,0x6b4a2f,97,1,103);
+box(1.4,1,.8,0x8a6238,102.5,.5,97);
+const stoveFire=box(.9,.2,.5,0xe08a3c,102.5,1.05,97);stoveFire.material=fireMat;
+box(1.6,.8,1,0x7a5c3e,103,.4,103);
+box(.9,.5,.7,0xc0392b,103,.95,103);
+box(3,.06,2,0xc96c50,100,.03,100);
+const trophyMeshes=[];
+for(let i=0;i<8;i++)trophyMeshes.push(ball(.16,0x777777,97.5+i*.72,2.2,96.15));
+function syncTrophies(){trophyMeshes.forEach((m,i)=>m.material=state.ach[ACH[i].id]?mat(0xffd34e):mat(0x777777));}
+// Barris da adega.
+const barrelGlow=[];
+for(let i=0;i<3;i++){
+ const bx=98.5+i*1.5;
+ const b=new THREE.Mesh(getGeo('barrel',()=>new THREE.CylinderGeometry(.55,.6,1.2,10)),mat(0x7a5c3e));
+ b.position.set(bx,.6,86);b.castShadow=true;scene.add(b);
+ const gl=ball(.12,0xe84a5f,bx,1.35,86);gl.visible=false;barrelGlow.push(gl);
+}
+function refreshBarrels(){barrelGlow.forEach((g,i)=>g.visible=!!(state.cellar[i]&&state.cellar[i].d>=3));}
+refreshBarrels();
+// Interior da loja: prateleiras, mercadorias e o gato.
+box(1,2.4,6,0x8a6238,95.5,1.2,120);
+const shelfGoods=new THREE.Group();scene.add(shelfGoods);
+function syncShelves(){
+ while(shelfGoods.children.length)shelfGoods.remove(shelfGoods.children[0]);
+ crops.forEach((c,i)=>{
+  const n=Math.min(5,state.seeds[i]+state.bag[i]);
+  for(let k=0;k<n;k++)ball(.09,c.color,96.6,.8+i*.32,118.6+k*.5,shelfGoods);
+ });
+}
+box(3,.9,1.2,0x9a7448,100,.45,121.5);
+const shopCat=new THREE.Group();shopCat.position.set(100,1.15,121.5);scene.add(shopCat);
+ball(.22,0x888888,0,0,0,shopCat);
+cone(.07,.14,0x888888,-.12,.22,0,shopCat,4);cone(.07,.14,0x888888,.12,.22,0,shopCat,4);
+const catTail=box(.06,.06,.4,0x888888,0,.1,-.3,shopCat);
+function syncVeh(){
+ cartG.position.set(state.veh.cart.x,0,state.veh.cart.z);
+ bikeG.position.set(state.veh.bike.x,0,state.veh.bike.z);
+ boatG.position.set(state.veh.boat.x,.1,state.veh.boat.z);
+}
+function refreshVeh(){cartG.visible=state.vehOwn.cart;bikeG.visible=state.vehOwn.bike;boatG.visible=state.vehOwn.boat;}
+function dismount(silent){
+ const vm=mounted;mounted=null;player.visible=true;
+ if(vm==='boat'){player.position.set(20.3,0,-8.5);state.veh.boat={x:19,z:-10};}
+ syncVeh();updateHUD();save();
+ if(!silent)toast('Desmontou.');
+}
+function buyVeh(id,name,price){
+ if(state.vehOwn[id]){toast('Você já tem! Use E perto para montar.');return}
+ const c=cost(price);
+ if(id==='cart'&&state.wood<10){sound('error');toast('Precisa de 10 madeiras! 🪓');return}
+ if(state.money<c){sound('error');toast(`Moedas insuficientes (${c}).`);return}
+ if(id==='cart')state.wood-=10;
+ state.money-=c;state.vehOwn[id]=true;
+ refreshVeh();sound('buy');updateHUD();save();toast(`${name} adquirido! 🎉`);
+}
+$('buyCart').onclick=()=>buyVeh('cart','Carroça',300);
+$('buyBike').onclick=()=>buyVeh('bike','Bicicleta',400);
+$('buyBoat').onclick=()=>buyVeh('boat','Barco',250);
+$('giftVil').onclick=()=>{closeShop();openGift('vil');};
+applyPaint();refreshVeh();syncVeh();
+let nightF=0,smokeT=0,birdT=0,fwT=0,miniT=0;
+const select=new THREE.Mesh(new THREE.RingGeometry(.9,1.02,4),
+ new THREE.MeshBasicMaterial({color:0xffe29a,side:THREE.DoubleSide}));
+select.rotation.x=-Math.PI/2;select.rotation.z=Math.PI/4;
+select.position.y=.14;scene.add(select);
+let selected=0,near=-1,shopOpen=false,time=0,timeOfDay=0.27,toastTimer,paused=false,questOpen=false,kitchenOpen=false,fishOpen=false,giftOpen=false,farmOpen=false,travelOpen=false,chestOpen=false,dressOpen=false;
+let mounted=null,inInterior=null,savedOut={x:3,z:6},lastRegion='Fazenda';
+let photoMode=false,needShot=false,cineMode=false,aimHeld=false,aimBlend=0,isMoving=false;
+// Áudio 100% sintetizado via WebAudio (sem arquivos externos).
+let actx=null,rainSrc=null,rainGain=null;
+function tone(f,delay=0,dur=.12,type='sine',vol=.12){
+ if(state.muted)return;
+ try{
+  actx=actx||new (window.AudioContext||window.webkitAudioContext)();
+  if(actx.state==='suspended')actx.resume();
+  const t=actx.currentTime+delay;
+  const o=actx.createOscillator(),g=actx.createGain();
+  o.type=type;o.frequency.setValueAtTime(f,t);
+  g.gain.setValueAtTime(0,t);
+  g.gain.linearRampToValueAtTime(vol,t+.01);
+  g.gain.exponentialRampToValueAtTime(.001,t+dur);
+  o.connect(g);g.connect(actx.destination);
+  o.start(t);o.stop(t+dur+.02);
+ }catch{}
+}
+function sound(kind){
+ if(state.muted)return;
+ switch(kind){
+  case 'egg':tone(920,0,.09,'sine',.1);tone(1240,.07,.1,'sine',.09);break;
+  case 'cluck':tone(320,0,.07,'square',.07);tone(240,.08,.09,'square',.07);break;
+  case 'cook':tone(180,0,.15,'sawtooth',.07);tone(520,.1,.12,'sine',.08);break;
+  case 'hit':tone(1300,0,.05,'square',.06);tone(900,.04,.06,'square',.05);break;
+  case 'splash':tone(400,0,.12,'sine',.08);tone(700,.08,.1,'sine',.07);break;
+  case 'horn':tone(520,0,.25,'square',.09);break;
+  case 'bark':tone(420,0,.08,'square',.08);tone(260,.09,.1,'square',.08);break;
+  case 'plant':tone(330,0,.1,'triangle');tone(220,.06,.12,'triangle');break;
+  case 'water':tone(520,0,.09,'sine');tone(390,.08,.12,'sine');break;
+  case 'harvest':tone(523,0,.1,'triangle');tone(659,.08,.1,'triangle');tone(784,.16,.14,'triangle');break;
+  case 'clean':tone(180,0,.18,'sawtooth',.08);break;
+  case 'error':tone(140,0,.16,'square',.08);break;
+  case 'buy':tone(660,0,.08,'square',.07);tone(880,.07,.1,'square',.07);break;
+  case 'coins':tone(880,0,.09,'square',.08);tone(1320,.08,.16,'square',.08);break;
+  case 'sleep':tone(262,0,.2,'sine',.1);tone(196,.15,.3,'sine',.1);break;
+  case 'win':[523,659,784,1046].forEach((f,i)=>tone(f,i*.12,.16,'triangle',.12));break;
+  case 'select':tone(700,0,.05,'sine',.06);break;
+ }
+}
+const keys={};
+function toast(t){$('toast').textContent=t;$('toast').style.opacity=1;
+ clearTimeout(toastTimer);toastTimer=setTimeout(()=>$('toast').style.opacity=0,3200);}
+function wIconFor(w,season){return w==='chuva'?(season==='Inverno'?'❄️':'🌧️'):w==='nublado'?'⛅':'☀️';}
+function drawDial(){
+ const cv=$('seasonDial');if(!cv)return;
+ const ctx=cv.getContext('2d');ctx.clearRect(0,0,54,54);
+ const cols=['#7dd87d','#f2d14e','#d88a3c','#dfe8ea'];
+ for(let i=0;i<4;i++){ctx.beginPath();ctx.fillStyle=cols[i];ctx.moveTo(27,27);ctx.arc(27,27,24,i*Math.PI/2-Math.PI/2,(i+1)*Math.PI/2-Math.PI/2);ctx.fill();}
+ ctx.fillStyle='#233d32';ctx.beginPath();ctx.arc(27,27,15,0,7);ctx.fill();
+ const a=((state.day-1)%16)/16*Math.PI*2-Math.PI/2;
+ ctx.strokeStyle='#ffe4a5';ctx.lineWidth=3;ctx.beginPath();ctx.moveTo(27,27);ctx.lineTo(27+Math.cos(a)*22,27+Math.sin(a)*22);ctx.stroke();
+ ctx.fillStyle='#e84a5f';
+ for(const d of [11,15]){const fa=((d-1)%16)/16*Math.PI*2-Math.PI/2;ctx.beginPath();ctx.arc(27+Math.cos(fa)*19,27+Math.sin(fa)*19,2.5,0,7);ctx.fill();}
+}
+function updateHUD(){
+ const season=seasonOf(state.day);
+ const seasonIcon={Primavera:'🌸','Verão':'☀️',Outono:'🍂',Inverno:'❄️'}[season];
+ const wIcon=state.weather==='chuva'?(season==='Inverno'?'❄️':'🌧️'):state.weather==='nublado'?'⛅':'☀️';
+ const hour=Math.floor(timeOfDay*24),night=(hour<6||hour>=18);
+ const em=energyMax(),ePct=Math.round(100*Math.max(0,state.energy)/em);
+ $('gameTitle').textContent=(night?'🌙':'☀️')+' Fazenda Aurora';
+ $('stats').innerHTML=
+  `<div class="srow">📅 Dia ${state.day} · ${seasonIcon} ${season} ${wIcon} · ${night?'🌙':'☀️'} ${hour}h · 🔮 ${wIconFor(state.forecast[0],seasonOf(state.day+1))}</div>`+
+  `<div class="srow">🪙 <b>${state.money}</b> · ⚡ <div id="ebar" class="${ePct<25?'low':''}"><i style="width:${ePct}%"></i></div> ${state.energy}/${em}</div>`+
+  (state.goalIdx<GOALS.length?`<div class="srow">🎯 Meta: <b>${GOALS[state.goalIdx]}</b> moedas</div>`:`<div class="srow">🏆 Todas as metas cumpridas!</div>`)+
+  `<div class="srow">🥚 Ovos: <b>${state.eggPos.length}</b>${state.fed?' · 🐔 alimentadas':' · 🐔 com fome'}${state.adubo>0?` · 🌱 ${state.adubo}`:''}</div>`+
+  (state.tut<TUTS.length?`<div class="sobj">🎯 ${TUTS[state.tut]}</div>`:'');
+ document.querySelectorAll('[data-seed]').forEach((b,i)=>{
+  b.classList.toggle('active',i===selected);
+  b.textContent=`${i+1} · ${crops[i].icon} ${crops[i].name} (${state.seeds[i]})`;
+ });
+ $('shopStats').textContent=`${state.money} moedas · Colheita: `+
+ state.bag.map((n,i)=>`${n} ${crops[i].name.toLowerCase()}`).join(', ')+
+ ` · 🥚 ${state.eggPos.length} ovo(s)`+(state.fed?' · 🐔 alimentadas':' · 🐔 com fome')+
+ ` · Venda: `+crops.map((c,i)=>`${c.icon}${Math.floor(c.price*state.prices[i])}`).join(' ')+
+  ` · 🍳 pratos: ${RECIPES.reduce((s,x)=>s+state.dishes[x.id],0)}`+
+  ` · ⛏️ ${ORES.map(o=>`${o.icon}${state.ore[o.id]}`).join('')} · 🪱 ${state.bait} · 🎣 ${FISH.reduce((s,f)=>s+state.fish[f.id],0)} · 🪵 ${state.wood} · 🍷 ${state.wine}`;
+ $('camBtn').textContent=camIcons[state.camMode];
+ refreshShop();drawDial();
+}
+function distance(x,z){return Math.hypot(player.position.x-x,player.position.z-z);}
+function tutGo(n){
+ if(state.tut!==n)return;
+ state.tut=n+1;
+ if(state.tut>=TUTS.length){
+  state.money+=30;sound('win');
+  burst(player.position.x,1.6,player.position.z,0xffd76c,26,3,5);
+  toast('Tutorial concluído! +30 moedas de presente. 🎉');
+ }
+ updateHUD();save();
+}
+function nearestEgg(){
+ let bi=-1,bd=2.2;
+ state.eggPos.forEach((e,i)=>{const d=distance(e[0],e[1]);if(d<bd){bd=d;bi=i}});
+ return bi;
+}
+function chickenNear(){
+ return chickens.some(g=>Math.hypot(player.position.x-g.position.x,player.position.z-g.position.z)<2.5);
+}
+function fertilize(){
+ if(paused||anyModal())return;
+ if(near<0||!plotActive(near)){toast('Aproxime-se de um canteiro.');return}
+ const p=state.plots[near];
+ if(p.type<0||p.dead){toast('Adubo só funciona em planta crescendo.');return}
+ const need=effDays(p.type);
+ if(p.age>=need){toast('Já está pronta para colher.');return}
+ if(state.adubo<=0){sound('error');toast('Sem adubo! Compre no mercado.');return}
+ if(state.energy<2){sound('error');toast('Sem energia. Durma para recuperar.');return}
+ state.adubo--;state.energy-=2;p.age=Math.min(p.age+1,need);
+ if(p.age>=need)p.ripe=0;
+ sound('plant');burst(plots[near].x,.8,plots[near].z,0x9fe870,12,1.5,3);
+ redraw();updateHUD();save();toast('Adubado! Crescimento acelerado. 🌱');
+}
+function interact(){
+ if(paused||anyModal())return;
+ if(distance(11,6)<3.7){sound('select');shopOpen=true;$('shop').style.display='grid';updateHUD();return}
+ const ei=nearestEgg();
+ if(ei>=0){
+  const ex=state.eggPos.splice(ei,1)[0];
+  state.stats.ovos++;sound('egg');burst(ex[0],.6,ex[1],0xfff6e8,10,1.5,2.5);
+  syncEggs();checkAch();updateHUD();save();toast('Ovo coletado! Venda no mercado. 🥚');
+  return;
+ }
+ if(distance(6.5,9.5)<3){sound('select');questOpen=true;refreshQuest();$('quest').style.display='grid';return}
+ if(chickenNear()){
+  if(state.fed){toast('Galinhas já alimentadas hoje. 🐔');return}
+  if(state.energy<2){sound('error');toast('Sem energia para alimentar. Durma um pouco!');return}
+  state.energy-=2;state.fed=true;sound('cluck');
+  burst(player.position.x,1,player.position.z,0xf2d14e,10,1.5,2.5);
+  updateHUD();save();toast('Galinhas alimentadas! Amanhã terão ovos. 🐔');
+  return;
+ }
+ const nid=npcNear();
+ if(nid){
+  if(nid==='tome'&&state.giftDay.tome===state.day&&state.npc.tome>=8&&state.tomeFished!==state.day){
+   state.tomeFished=state.day;
+   const f=FISH[(Math.random()*FISH.length)|0];
+   state.fish[f.id]++;state.stats.fishCaught++;
+   sound('splash');burst(player.position.x,1.4,player.position.z,0x6ec6f2,14,2,3.5);
+   checkAch();updateHUD();save();toast(`Tomé fisgou ${f.icon} ${f.name} para você! 🎣`);
+   return;
+  }
+  sound('select');openGift(nid);return;
+ }
+ const ri=nearestRock();
+ if(ri>=0){
+  if(state.energy<2){sound('error');toast('Sem energia para minerar.');return}
+  state.energy-=2;state.rocks[ri]--;
+  const ore=ORES[ROCKS[ri].t];
+  sound('hit');burst(ROCKS[ri].x,.8,ROCKS[ri].z,ore.color,12,1.8,3);
+  if(state.rocks[ri]<=0){
+   state.ore[ore.id]++;state.stats.ores++;
+   toast(`+1 ${ore.name}! ⛏️`);
+  }else toast('Clang! Continue... ⛏️');
+  syncRocks();checkAch();updateHUD();save();
+  return;
+ }
+ if(distance(16.5,-2)<2.5){
+  const tot=ORES.reduce((s,o)=>s+state.ore[o.id]*o.price,0);
+  if(!tot){toast('Sem minério. Minere na mina a oeste! ⛏️');return}
+  for(const o of ORES)state.ore[o.id]=0;
+  state.money+=tot;state.stats.ganhas+=tot;
+  sound('coins');burst(16.5,1.2,-2,0xffb36e,18,2.5,4);
+  updateHUD();save();toast(`Barras vendidas por ${tot} moedas! 🔥`);
+  return;
+ }
+ if(isFestivalDay()&&state.festClaimed!==state.day&&distance(13.8,8.6)<2.5){
+  state.festClaimed=state.day;state.money+=120;
+  sound('win');burst(13.8,1.2,8.6,0xffd76c,26,3,5);
+  present.visible=false;
+  updateHUD();save();toast('Presente do festival! +120 moedas! 🎁');
+  return;
+ }
+ if(distance(20.3,-10)<2.6){sound('select');openFish();return}
+ // Veículos: E monta/desmonta; montado, E desmonta.
+ if(mounted){
+  if(mounted==='boat'&&distance(14,-10)<8){sound('select');openFish();return}
+  dismount();return;
+ }
+ const vAt=id=>Math.hypot(player.position.x-state.veh[id].x,player.position.z-state.veh[id].z)<2.2;
+ if(cartG.visible&&vAt('cart')){
+  if(state.hay<100&&state.bag[0]>=2){state.bag[0]-=2;state.hay=100;sound('plant');updateHUD();save();toast('Cavalo alimentado! 🐴');return}
+  mounted='cart';player.visible=false;sound('select');updateHUD();save();toast('Na carroça! E desmonta · feno: '+Math.round(state.hay)+'%');
+  return;
+ }
+ if(bikeG.visible&&vAt('bike')){mounted='bike';player.visible=false;sound('select');toast('De bicicleta! H = campainha 🚲');return}
+ if(boatG.visible&&Math.hypot(player.position.x-state.veh.boat.x,player.position.z-state.veh.boat.z)<2.6){mounted='boat';player.visible=false;sound('select');toast('No barco! E desmonta 🎣');return}
+ if(distance(0,-14)<2.5){
+  const pc=cost(50);
+  if(state.money<pc){sound('error');toast(`Pintura custa ${pc}.`);return}
+  state.money-=pc;state.paint=(state.paint+1)%4;applyPaint();
+  sound('buy');updateHUD();save();toast('Pintura nova! 🎨');
+  return;
+ }
+ for(let ti=0;ti<TOTEMS.length;ti++){
+  const T=TOTEMS[ti];
+  if(Math.hypot(player.position.x-T.x,player.position.z-T.z)<2.5){sound('select');travelOpen=true;refreshTravel();$('travel').style.display='grid';return}
+ }
+ // Portas e interiores.
+ if(!inInterior){
+  if(distance(-8,-8.7)<2){enterInterior('house',100,102);syncTrophies();toast('Lar doce lar! 🏠');return}
+  if(distance(14,8.5)<2){enterInterior('shop',100,122.5);syncShelves();toast('Mercadinho por dentro! 🏪');return}
+ }else if(inInterior==='house'){
+  if(distance(100,103.5)<2){exitInterior();toast('De volta à fazenda!');return}
+  if(distance(100,96.5)<1.8){inInterior='cellar';player.position.set(100,0,89);sound('select');toast('Adega fresca... 🍷');return}
+  if(distance(102.5,97)<2){kitchenOpen=true;refreshKitchen();$('kitchen').style.display='grid';return}
+  if(distance(103,103)<2.2){chestOpen=true;refreshChest();$('chest').style.display='grid';return}
+  if(distance(97,103)<2.2){dressOpen=true;refreshDresser();$('dresser').style.display='grid';return}
+ }else if(inInterior==='cellar'){
+  for(let i=0;i<3;i++){if(distance(98.5+i*1.5,86)<1.8){cellarTap(i);return}}
+  if(distance(100,91.5)<2){inInterior='house';player.position.set(100,0,99);sound('select');return}
+ }else if(inInterior==='shop'){
+  if(distance(100,123.5)<2){exitInterior();toast('De volta à fazenda!');return}
+ }
+ // Prefeito e crianças.
+ if(!inInterior){
+  if(distance(30,6.2)<2.6){mayorTalk();return}
+  if(distance(27.5,10)<2.2){kidTalk(1);return}
+  if(distance(32.5,10)<2.2){kidTalk(2);return}
+ }
+ // Corte de árvore (machado melhora rendimento).
+ const tri=nearestTree();
+ if(tri>=0){
+  const ac=Math.max(1,3-state.tools.axe);
+  if(state.energy<ac){sound('error');toast('Sem energia.');return}
+  state.energy-=ac;state.trees[tri]=false;
+  const tw=2+state.tools.axe;state.wood+=tw;
+  sound('hit');burst(treeData[tri].x,1.5,treeData[tri].z,0x8a6238,12,1.8,3);
+  syncTrees();updateHUD();save();toast(`+${tw} madeiras! 🪵`);
+  return;
+ }
+ if(distance(-4,-6)<2.5){sound('select');kitchenOpen=true;refreshKitchen();$('kitchen').style.display='grid';return}
+ if(near<0||!plotActive(near)){sound('error');toast('Aproxime-se de um canteiro ou ponto de interesse.');return}
+ const p=state.plots[near];
+ const pc=Math.max(1,4-state.tools.hoe),wc=Math.max(1,4-state.tools.can),hc=Math.max(1,4-state.tools.scythe);
+ const need=p.type>=0?effDays(p.type):0;
+ let cost=4;
+ if(p.type<0){
+  cost=pc;
+  if(state.energy<cost){sound('error');toast('Sem energia. Durma para recuperar.');return}
+  if(state.seeds[selected]<=0){sound('error');toast('Compre mais sementes no mercado.');return}
+  state.seeds[selected]--;p.type=selected;p.age=0;p.water=false;p.ripe=0;p.dead=false;
+  sound('plant');burst(plots[near].x,.5,plots[near].z,0x7dd87d,12,1.5,3);
+  tutGo(1);toast('Semente plantada. Pressione E novamente para regar.');
+ }else if(p.dead){
+  cost=pc;
+  if(state.energy<cost){sound('error');toast('Sem energia. Durma para recuperar.');return}
+  p.type=-1;p.age=0;p.water=false;p.ripe=0;p.dead=false;
+  sound('clean');burst(plots[near].x,.5,plots[near].z,0x8a8266,10,1.5,2.5);
+  toast('A planta apodreceu. Canteiro limpo — plante de novo!');
+ }else if(p.age>=need){
+  cost=hc;
+  if(state.energy<cost){sound('error');toast('Sem energia. Durma para recuperar.');return}
+  const cc=crops[p.type];
+  state.bag[p.type]++;state.stats.colhidas++;
+  let bonus='';
+  if(state.tools.scythe>=3){state.bag[p.type]++;bonus=' Bônus de ouro! ✨';}
+  toast(`${cc.name} colhida! Venda no mercado.${bonus}`);
+  p.type=-1;p.age=0;p.water=false;p.ripe=0;p.dead=false;
+  sound('harvest');burst(plots[near].x,.7,plots[near].z,cc.color,16,2,4);
+  if(state.quest&&state.quest.kind==='harvest'){state.questProg++;if(state.questProg>=state.quest.need)completeQuest();}
+  tutGo(4);
+ }else if(!p.water){
+  cost=wc;
+  if(state.energy<cost){sound('error');toast('Sem energia. Durma para recuperar.');return}
+  // Regador melhorado alcança área 5x5.
+  const R=state.tools.can>=2?2:1;
+  const r0=(near/6)|0,c0=near%6;let n=0;
+  for(let dr=-R;dr<=R;dr++)for(let dc=-R;dc<=R;dc++){
+   const rr=r0+dr,cc2=c0+dc;
+   if(rr<0||rr>=state.rows||cc2<0||cc2>5)continue;
+   const q2=state.plots[rr*6+cc2];
+   if(q2.type>=0&&!q2.dead&&!q2.water&&q2.age<effDays(q2.type)){q2.water=true;n++;}
+  }
+  sound('water');burst(plots[near].x,.5,plots[near].z,0x6ec6f2,12,1.8,3);
+  tutGo(2);toast(n>1?`Regadas ${n} plantas de uma vez! 💧`:'Regado! A planta crescerá quando você dormir.');
+ }
+ else{toast('Já está regado. Durma para passar ao próximo dia.');return}
+ state.energy-=cost;redraw();updateHUD();save();checkAch();
+}
+function sleep(){
+ if(paused||anyModal())return;
+ if(inInterior==='cellar'||inInterior==='shop'){toast('Saia para dormir.');return}
+ if(!inInterior&&distance(-8,-7.5)>3.5){sound('error');toast('Vá até a porta de casa para dormir.');return}
+ if(inInterior==='house'&&distance(100,97.5)>3){sound('error');toast('Deite-se na cama para dormir. 🛏️');return}
+  state.day++;state.energy=energyMax();state.stats.noites++;
+  timeOfDay=0.27;time=0;birdT=0;fwT=0;smokeT=0;
+  state.weather=state.forecast[0];
+  state.forecast=[state.forecast[1],rollWeather()];
+ // Preços se recuperam a cada manhã; registra a estação visitada.
+ state.prices=state.prices.map(m=>Math.min(1.2,Math.max(0.5,m+0.15+(Math.random()*0.1-0.05))));
+  const sn=seasonOf(state.day);
+  if(!state.seasonsSeen.includes(sn)){state.seasonsSeen.push(sn);seasonJingle(sn);}
+ let expired=false;
+ if(state.quest&&state.day>state.quest.expires){state.quest=null;state.questProg=0;expired=true;}
+ if(!state.quest){state.quest=genQuest();state.questProg=0;}
+ const raining=state.weather==='chuva';
+ let wilted=0,watered=0,laid=0;
+ state.plots.forEach((p,i)=>{
+  if(!plotActive(i)||p.type<0||p.dead)return;
+  const need=effDays(p.type),wet=p.water||raining;
+  if(p.age>=need){p.ripe=(p.ripe||0)+1;if(p.ripe>=2){p.dead=true;wilted++;}}
+  else if(wet){p.age++;if(p.age>=need)p.ripe=0;}
+  p.water=raining&&p.age<need;
+ });
+ if(state.aspersor)state.plots.forEach((p,i)=>{
+  if(watered>=8||!plotActive(i)||p.type<0||p.dead||p.water||p.age>=effDays(p.type))return;
+  p.water=true;watered++;
+ });
+ if(state.fed)chickens.forEach(g=>{
+  if(state.eggPos.length>=8||Math.random()>=0.7)return;
+  state.eggPos.push([THREE.MathUtils.clamp(g.position.x+Math.random()*2-1,-2,6),
+   THREE.MathUtils.clamp(g.position.z+Math.random()*2-1,9,14)]);
+  laid++;
+ });
+  state.fed=false;
+  state.rocks=[3,3,3,3,4];
+  syncRocks();
+  // Gus colhe, Marta cozinha, adega envelhece, tocos rebrotam.
+  let gusN=0;
+  if(state.npc.vil>=8)state.plots.forEach((p,i)=>{
+   if(!plotActive(i)||p.type<0||p.dead||p.age<effDays(p.type))return;
+   state.bag[p.type]++;state.stats.colhidas++;gusN++;
+   if(state.quest&&state.quest.kind==='harvest'){state.questProg++;if(state.questProg>=state.quest.need)completeQuest();}
+   p.type=-1;p.age=0;p.water=false;p.ripe=0;p.dead=false;
+  });
+  let cookN=0;
+  if(state.npc.marta>=6)for(const r of RECIPES){
+   let guard=0;
+   while(recipeReady(r)&&cookN<3&&guard++<5){
+    Object.entries(r.need).forEach(([c])=>state.bag[+c]-=needQty(r,c));
+    state.dishes[r.id]++;state.stats.cooked++;cookN++;
+   }
+  }
+  state.cellar.forEach(b=>{if(b&&b.d<3)b.d++;});
+  refreshBarrels();
+  state.trees=state.trees.map(a=>a||Math.random()<0.4);
+  syncTrees();
+  let gifts='';
+  if(state.npc.marta>=6){state.adubo+=3;gifts+=' 🎁 Marta deixou +3 adubos!';}
+  if(state.npc.tome>=6){state.bait+=2;gifts+=' 🎁 Tomé deixou +2 iscas!';}
+  syncEggs();
+ tutGo(3);
+ redraw();updateHUD();save();sound('sleep');
+ const season=seasonOf(state.day);
+ toast(`Bom dia! Dia ${state.day} · ${season}.`+
+  (raining?(season==='Inverno'?' ❄️ Nevou e regou tudo!':' 🌧️ Chuva regou tudo!'):'')+
+  (wilted?` ${wilted} apodreceram!`:'')+(watered?` Aspersor regou ${watered}.`:'')+
+   (laid?` 🐔 ${laid} ovo(s)!`:'')+(expired?' 📋 Uma missão expirou.':'')+gifts+
+   (gusN?` 🚚 Gus colheu ${gusN}!`:'')+(cookN?` 🧑‍🍳 Marta cozinhou ${cookN}!`:''));
+ checkAch();
+}
+addEventListener('keydown',e=>{
+ if(['ArrowUp','ArrowDown','ArrowLeft','ArrowRight',' '].includes(e.key))e.preventDefault();
+ keys[e.key.toLowerCase()]=true;
+ if(e.repeat)return;
+ if(e.key.toLowerCase()==='e')interact();
+ if(e.key.toLowerCase()==='r')sleep();
+ if(e.key.toLowerCase()==='f')fertilize();
+ if(e.key.toLowerCase()==='m'){state.muted=!state.muted;save();toast(state.muted?'Som desligado.':'Som ligado.');sound('select');}
+  if(e.key.toLowerCase()==='v')cycleCam();
+  if(e.key.toLowerCase()==='c'){cineMode=!cineMode;toast(cineMode?'🎬 Modo cinema ON':'🎬 Modo cinema OFF');}
+  if(e.key.toLowerCase()==='p')togglePhoto();
+  if(e.key.toLowerCase()==='h')hornOrDog();
+  if(e.key.toLowerCase()==='b'){if(farmOpen){farmOpen=false;$('farm').style.display='none'}else if(!anyModal())refreshFarm();}
+  if(e.key===' '&&fishOpen){if(fishState==='run')fishStrike();else fishCast();}
+ if(['1','2','3','4','5'].includes(e.key)){selected=+e.key-1;updateHUD();sound('select')}
+  if(e.key==='Escape'){
+   if(fishOpen){if(fishState==='run'){state.bait++;state.energy=Math.min(energyMax(),state.energy+3);updateHUD();save();}fishOpen=false;fishState='idle';$('fish').style.display='none'}
+   else if(giftOpen){giftOpen=false;$('gift').style.display='none'}
+   else if(farmOpen){farmOpen=false;$('farm').style.display='none'}
+   else if(travelOpen){travelOpen=false;$('travel').style.display='none'}
+   else if(chestOpen){chestOpen=false;$('chest').style.display='none'}
+   else if(dressOpen){dressOpen=false;$('dresser').style.display='none'}
+   else if(kitchenOpen){kitchenOpen=false;$('kitchen').style.display='none'}
+   else if(questOpen){questOpen=false;$('quest').style.display='none'}
+   else if(shopOpen)closeShop();
+   else toggleMenu();
+  }
+});
+addEventListener('keyup',e=>keys[e.key.toLowerCase()]=false);
+addEventListener('blur',()=>Object.keys(keys).forEach(k=>keys[k]=false));
+document.querySelectorAll('[data-seed]').forEach(b=>b.onclick=()=>{
+ selected=+b.dataset.seed;updateHUD();sound('select');
+});
+document.querySelectorAll('[data-buy]').forEach(b=>b.onclick=()=>{
+ const i=+b.dataset.buy,c=cost(crops[i].cost);
+ if(state.money<c){sound('error');toast(`Moedas insuficientes (${c}).`);return}
+ state.money-=c;state.seeds[i]+=5;updateHUD();save();sound('buy');toast('Sementes compradas!');
+});
+$('sell').onclick=()=>{
+ // Oferta e demanda: vender muito derruba o preço do dia.
+ let cropTotal=0;
+  state.bag.forEach((n,i)=>{
+   if(n>0){
+    cropTotal+=Math.floor(crops[i].price*state.prices[i])*n;
+    state.profit[i]+=Math.floor(crops[i].price*state.prices[i])*n;
+    state.prices[i]=Math.max(0.5,state.prices[i]-0.03*n);
+   }
+  });
+  const dishTotal=RECIPES.reduce((s,x)=>s+state.dishes[x.id]*x.sell,0);
+  const fishTotal=FISH.reduce((s,f)=>s+state.fish[f.id]*f.price,0);
+  const extraTotal=state.wood*5+state.wine*150;
+  const total=cropTotal+state.eggPos.length*EGG_PRICE+dishTotal+fishTotal+extraTotal;
+ if(!total){sound('error');toast('Você ainda não tem colheitas, ovos ou pratos para vender.');return}
+ const hadEggs=state.eggPos.length>0;
+ state.money+=total;state.stats.ganhas+=total;state.bag=[0,0,0,0,0];
+  for(const x of RECIPES)state.dishes[x.id]=0;
+  for(const f of FISH)state.fish[f.id]=0;
+  state.wood=0;state.wine=0;
+ state.eggPos=[];syncEggs();
+ if(state.quest&&state.quest.kind==='earn'){state.questProg+=total;if(state.questProg>=state.quest.need)completeQuest();}
+ tutGo(5);
+ sound('coins');burst(player.position.x,1.5,player.position.z,0xffd76c,22,2.5,4.5);
+ if(state.goalIdx<GOALS.length&&state.money>=GOALS[state.goalIdx]){
+  const g=GOALS[state.goalIdx];state.goalIdx++;sound('win');
+  toast(`Meta de ${g} moedas cumprida! 🎉`+(state.goalIdx<GOALS.length?` Próxima: ${GOALS[state.goalIdx]}.`:' Você é uma lenda da fazenda!'));
+ }else toast(`Vendido por ${total} moedas!${hadEggs?' (inclui ovos 🥚)':''}`);
+ updateHUD();save();checkAch();
+};
+$('expand').onclick=()=>{
+ if(state.rows>=6){toast('Fazenda no tamanho máximo! 🌱');return}
+ const c=cost(150);
+ if(state.money<c){sound('error');toast(`Moedas insuficientes (${c}).`);return}
+ state.money-=c;state.rows++;
+ sound('buy');redraw();updateHUD();save();
+ toast(`Novos canteiros liberados! ${state.rows*6} no total. 🌱`);
+};
+$('sprinkler').onclick=()=>{
+ if(state.aspersor){toast('Aspersor já instalado! 💧');return}
+ const c=cost(200);
+ if(state.money<c){sound('error');toast(`Moedas insuficientes (${c}).`);return}
+ state.money-=c;state.aspersor=true;sprinkler.visible=true;
+ sound('buy');updateHUD();save();toast('Aspersor instalado! Ele rega 8 plantas por manhã. 💧');
+};
+$('fert').onclick=()=>{
+ const c=cost(40);
+ if(state.money<c){sound('error');toast(`Moedas insuficientes (${c}).`);return}
+ state.money-=c;state.adubo+=5;
+ sound('buy');updateHUD();save();toast('+5 adubos! Pressione F perto da planta. 🌱');
+};
+function buyTool(key){
+ const t=state.tools[key];
+ if(t>=3){toast('Nível máximo! 🔧');return}
+ const c=cost(toolCost(t)),req=TOOL_ORE[t],oreId=Object.keys(req)[0];
+ const oreName=oreId==='copper'?'cobre':oreId==='iron'?'ferro':'ouro';
+ if(state.money<c){sound('error');toast(`Moedas insuficientes (${c}).`);return}
+ if(state.ore[oreId]<req[oreId]){sound('error');toast(`Precisa de ${req[oreId]} ${oreName} da mina! ⛏️`);return}
+ state.money-=c;state.ore[oreId]-=req[oreId];state.tools[key]++;
+ sound('buy');checkAch();updateHUD();save();toast(`Ferramenta de ${TIER_N[t+1]}! 🔧`);
+}
+$('upHoe').onclick=()=>buyTool('hoe');
+$('upCan').onclick=()=>buyTool('can');
+$('upScythe').onclick=()=>buyTool('scythe');
+$('upAxe').onclick=()=>buyTool('axe');
+function refreshShop(){
+ document.querySelectorAll('[data-buy]').forEach((b)=>{const i=+b.dataset.buy;b.textContent=`${crops[i].icon} 5 sementes de ${crops[i].name.toLowerCase()} · ${cost(crops[i].cost)} moedas`;});
+ $('expand').textContent=state.rows>=6?'🌱 Fazenda no tamanho máximo ✓':`🌱 +8 canteiros (${state.rows*6}/36) · ${cost(150)} moedas`;
+ $('sprinkler').textContent=state.aspersor?'💧 Aspersor instalado ✓':`💧 Aspersor automático · ${cost(200)} moedas`;
+ $('fert').textContent=`🌱 5 adubos · ${cost(40)} moedas`;
+ $('bait').textContent=`🪱 5 iscas · ${cost(15)} moedas`;
+ const tb=(id,key,icon,name)=>{
+  const t=state.tools[key];
+  if(t>=3){$(id).textContent=`${icon} ${name} ${TIER_N[t]} ✓`;return}
+  const req=TOOL_ORE[t],oreId=Object.keys(req)[0];
+  const oreName=oreId==='copper'?'cobre':oreId==='iron'?'ferro':'ouro';
+  $(id).textContent=`${icon} ${name} ${TIER_N[t]} → ${TIER_N[t+1]} · ${cost(toolCost(t))} +${req[oreId]} ${oreName}`;
+ };
+ tb('upHoe','hoe','⛏️','Enxada');tb('upCan','can','🚿','Regador');tb('upScythe','scythe','🌾','Foice');tb('upAxe','axe','🪓','Machado');
+ $('upHouse').textContent=state.house>=3?'🏠 Casa nível 3 ✓':`🏠 Casa nível ${state.house+1} · ${cost(HOUSE_COST[state.house-1])} (⚡${state.house===1?130:160})`;
+ $('buyCart').textContent=state.vehOwn.cart?'🐴 Carroça ✓ (feno '+Math.round(state.hay)+'%)':`🐴 Carroça · ${cost(300)} + 10 🪵`;
+ $('buyBike').textContent=state.vehOwn.bike?'🚲 Bicicleta ✓':'🚲 Bicicleta · '+cost(400);
+ $('buyBoat').textContent=state.vehOwn.boat?'⛵ Barco ✓':'⛵ Barco · '+cost(250);
+}
+function closeShop(){shopOpen=false;$('shop').style.display='none'}
+$('close').onclick=closeShop;
+function toggleMenu(){
+ paused=!paused;
+ $('menu').style.display=paused?'grid':'none';
+ if(paused)refreshMenu();
+}
+const camIcons=['🗺️','🦅','🚶'];
+const camNames=['Isométrica','De cima','Terceira pessoa'];
+function cycleCam(){
+ state.camMode=(state.camMode+1)%3;
+ $('camBtn').textContent=camIcons[state.camMode];
+ if(state.camMode===2){
+  camYaw=player.rotation.y+Math.PI;camPitch=0.35;camDist=7.5;
+  cvs.style.cursor='grab';
+  toast('Câmera: Terceira pessoa — arraste p/ olhar, scroll = zoom.');
+ }else{cvs.style.cursor='default';toast('Câmera: '+camNames[state.camMode]);}
+ save();sound('select');
+}
+$('camBtn').onclick=cycleCam;
+function togglePhoto(){
+ photoMode=!photoMode;
+ document.body.classList.toggle('photo',photoMode);
+ if(!photoMode)needShot=true;
+ else toast('Modo foto! P captura e sai. 📸');
+}
+function hornOrDog(){
+ if(mounted==='bike'){sound('horn');return}
+ if(mounted)return;
+ if(state.eggPos.length>0){
+  let bi=0,bd=1e9;
+  state.eggPos.forEach((e,i)=>{const d=Math.hypot(player.position.x-e[0],player.position.z-e[1]);if(d<bd){bd=d;bi=i}});
+  state.eggPos.splice(bi,1);
+  state.eggPos.push([THREE.MathUtils.clamp(player.position.x+.6,-44,44),THREE.MathUtils.clamp(player.position.z+.6,-38,38)]);
+  sound('bark');burst(player.position.x,1,player.position.z,0xffd34e,10,1.5,2.5);
+  syncEggs();updateHUD();save();toast('O cachorro trouxe um ovo! 🐶');
+ }else{
+  sound('bark');burst(dog.position.x,1,dog.position.z,0xf28ab0,8,1.2,2);
+  toast('Au au! 🐶');
+ }
+}
+$('resume').onclick=toggleMenu;
+$('soundBtn').onclick=()=>{state.muted=!state.muted;save();$('soundBtn').textContent=state.muted?'🔇 Som: desligado':'🔊 Som: ligado';sound('select');};
+$('restart').onclick=()=>{if(confirm('Recomeçar a fazenda atual? As outras continuam salvas.')){try{localStorage.removeItem(saveKey());}catch{}location.reload();}};
+function refreshMenu(){
+ const s=state.stats;
+ $('menuStats').innerHTML=`Dia ${state.day} · ${state.money} moedas<br>`+
+ `🌾 ${s.colhidas} colhidas · 🥚 ${s.ovos} ovos · 🌙 ${s.noites} noites<br>💰 ${s.ganhas} ganhas · 📋 ${state.questsDone} missões<br>`+
+  `⛏️ ${TIER_N[state.tools.hoe]} · 🚿 ${TIER_N[state.tools.can]} · 🌾 ${TIER_N[state.tools.scythe]} · 🪓 ${TIER_N[state.tools.axe]}<br>`+
+  `❤️ Gus ${state.npc.vil} · Marta ${state.npc.marta} · Tomé ${state.npc.tome}`;
+ $('soundBtn').textContent=state.muted?'🔇 Som: desligado':'🔊 Som: ligado';
+ for(let i=0;i<3;i++)$('slot'+i).textContent=(i===state.slot?'▶ ':'')+slotInfo(i);
+ const got=ACH.filter(a=>state.ach[a.id]).length;
+ $('achList').innerHTML='Conquistas '+got+'/'+ACH.length+': '+ACH.map(a=>state.ach[a.id]?a.icon:'🔒').join(' ');
+}
+function slotInfo(n){
+ try{
+  const s=JSON.parse(localStorage.getItem('aurora-v2-slot'+n));
+  if(s&&Number.isFinite(s.day))return `Fazenda ${n+1}: dia ${s.day} · ${s.money} 🪙`;
+ }catch{}
+ return `Fazenda ${n+1}: vazia`;
+}
+function switchSlot(n){
+ if(n===state.slot)return;
+ save();state=loadSlot(n);
+ if(!state.quest){state.quest=genQuest();state.questProg=0;}
+ inInterior=null;mounted=null;player.visible=true;
+ if(!Array.isArray(state.trees)||state.trees.length!==treeData.length)state.trees=treeData.map(()=>true);
+  syncEggs();syncRocks();syncTrees();refreshBarrels();sprinkler.visible=state.aspersor;refreshHouse();applyOutfit();syncVeh();refreshVeh();
+ redraw();refreshMenu();updateHUD();save();
+ sound('select');toast('Fazenda '+(n+1)+' carregada. 🚜');
+}
+$('slot0').onclick=()=>switchSlot(0);
+$('slot1').onclick=()=>switchSlot(1);
+$('slot2').onclick=()=>switchSlot(2);
+// ===== Missões =====
+function seasonJingle(sn){
+ const notes={Primavera:[523,659,784],Verão:[587,740,880],Outono:[440,554,659],Inverno:[392,494,587]}[sn]||[523,659,784];
+ notes.forEach((f,i)=>tone(f,i*.14,.16,'triangle',.1));
+}
+function genQuest(){
+ const roll=Math.random();
+ let q;
+ if(roll<0.5)q={kind:'deliver',crop:(Math.random()*5)|0,need:2+((Math.random()*3)|0)};
+ else if(roll<0.75)q={kind:'harvest',need:4+((Math.random()*4)|0)};
+ else q={kind:'earn',need:150+((Math.random()*3)|0)*50};
+ const reward=q.kind==='deliver'?40+q.need*15:q.kind==='harvest'?50+q.need*8:60+Math.round(q.need/5);
+ return {...q,reward:Math.round(reward),expires:state.day+3};
+}
+function questText(q){
+ if(!q)return 'Sem missão ativa. Durma para receber uma nova. 😴';
+ if(q.kind==='deliver')return `📦 Entregue ${q.need} ${crops[q.crop].name.toLowerCase()} (${Math.min(state.bag[q.crop],q.need)}/${q.need})<br>Recompensa: ${q.reward} moedas · até o dia ${q.expires}`;
+ if(q.kind==='harvest')return `🌾 Colha ${q.need} plantas (${Math.min(state.questProg,q.need)}/${q.need})<br>Recompensa: ${q.reward} moedas · até o dia ${q.expires}`;
+ return `💰 Ganhe ${q.need} moedas vendendo (${Math.min(state.questProg,q.need)}/${q.need})<br>Recompensa: ${q.reward} moedas · até o dia ${q.expires}`;
+}
+function refreshQuest(){
+ $('questInfo').innerHTML=questText(state.quest);
+ const b=$('questClaim'),q=state.quest;
+ if(!q){b.disabled=true;b.textContent='Sem missão';return}
+ b.disabled=false;
+ b.textContent=q.kind==='deliver'?`Entregar (${state.bag[q.crop]}/${q.need})`:'Concluir';
+}
+function completeQuest(){
+ const q=state.quest;if(!q)return;
+ state.money+=q.reward;state.questsDone++;state.quest=null;state.questProg=0;
+ sound('win');burst(player.position.x,1.6,player.position.z,0x9fe870,22,2.5,4);
+ checkAch();updateHUD();save();
+ toast(`Missão cumprida! +${q.reward} moedas. 📋`);
+ if(questOpen)refreshQuest();
+}
+$('questClaim').onclick=()=>{
+ const q=state.quest;if(!q)return;
+ if(q.kind!=='deliver'){toast('Complete a missão na fazenda primeiro.');return}
+ if(state.bag[q.crop]<q.need){sound('error');toast('Colheita insuficiente na sacola.');return}
+ state.bag[q.crop]-=q.need;
+ completeQuest();refreshQuest();
+};
+$('questClose').onclick=()=>{questOpen=false;$('quest').style.display='none'};
+// ===== Cozinha =====
+function needQty(r,c){return Math.max(1,r.need[c]-(state.house>=2?1:0));}
+function recipeReady(r){return Object.entries(r.need).every(([c])=>state.bag[+c]>=needQty(r,c));}
+function recipeNeedTxt(r){return Object.entries(r.need).map(([c])=>`${needQty(r,c)} ${crops[+c].name.toLowerCase()}`).join(' + ');}
+function refreshKitchen(){
+ $('kitchenList').innerHTML=RECIPES.map(r=>{
+  const ok=recipeReady(r);
+  return `<div>${r.icon} <b>${r.name}</b> <small>(${recipeNeedTxt(r)} → vende ${r.sell} / come +${r.energy}⚡)</small><br>`+
+  `<button data-cook="${r.id}" ${ok?'':'disabled'}>Cozinhar (${state.dishes[r.id]})</button> `+
+  `<button data-eat="${r.id}" ${state.dishes[r.id]>0?'':'disabled'}>Comer (${state.dishes[r.id]})</button></div>`;
+ }).join('');
+}
+$('kitchenList').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b||b.disabled)return;
+ const r=RECIPES.find(x=>x.id===(b.dataset.cook||b.dataset.eat));if(!r)return;
+ if(b.dataset.cook){
+  if(!recipeReady(r)){sound('error');return}
+  Object.entries(r.need).forEach(([c])=>state.bag[+c]-=needQty(r,c));
+  state.dishes[r.id]++;state.stats.cooked++;
+  sound('cook');burst(player.position.x,1.2,player.position.z,0xffb36e,14,2,3.5);
+  checkAch();updateHUD();save();refreshKitchen();toast(`${r.icon} ${r.name} pronto!`);
+ }else{
+  if(state.dishes[r.id]<=0){sound('error');return}
+  if(state.energy>=energyMax()){toast('Energia cheia!');return}
+  state.dishes[r.id]--;state.energy=Math.min(energyMax(),state.energy+r.energy);
+  sound('harvest');updateHUD();save();refreshKitchen();toast(`Que delícia! +${r.energy} energia. 😋`);
+ }
+});
+$('kitchenClose').onclick=()=>{kitchenOpen=false;$('kitchen').style.display='none'};
+$('bait').onclick=()=>{
+ const c=cost(15);
+ if(state.money<c){sound('error');toast(`Moedas insuficientes (${c}).`);return}
+ state.money-=c;state.bait+=5;
+ sound('buy');updateHUD();save();toast('+5 iscas! Pesque no cais. 🎣');
+};
+$('upHouse').onclick=()=>{
+ if(state.house>=3){toast('Casa no nível máximo! 🏠');return}
+ const c=cost(HOUSE_COST[state.house-1]);
+ if(state.money<c){sound('error');toast(`Moedas insuficientes (${c}).`);return}
+ state.money-=c;state.house++;
+ refreshHouse();sound('buy');checkAch();updateHUD();save();
+ toast(`Casa nível ${state.house}! Energia máxima ${energyMax()}. 🏠`);
+};
+// ===== Pesca =====
+let fishState='idle',fishPos=0,fishDir=1,fishZone=30;
+const FISH_W=18;
+function openFish(){
+ fishOpen=true;fishState='idle';
+ refreshFishCollection();
+ $('fishResult').textContent=state.bait>0?'Jogue a isca e fisgue na zona verde!':'Sem iscas! Compre no mercado. 🪱';
+ $('fishBtn').textContent='Jogar isca (Espaço)';
+ $('fishZone').style.left='30%';$('fishZone').style.width=FISH_W+'%';
+ $('fishMarker').style.left='calc(0% - 3px)';
+ $('fish').style.display='grid';
+}
+function refreshFishCollection(){
+ $('fishCollection').innerHTML='Coleção: '+FISH.map(f=>`${f.icon}${state.fish[f.id]>0?state.fish[f.id]:'·'}`).join(' ');
+}
+function fishCast(){
+ if(fishState==='run')return;
+ if(state.bait<=0){sound('error');toast('Sem iscas! Compre no mercado. 🪱');return}
+ if(state.energy<3){sound('error');toast('Sem energia para pescar.');return}
+ state.energy-=3;state.bait--;
+ fishState='run';fishZone=10+Math.random()*62;fishPos=0;fishDir=1;
+ $('fishZone').style.left=fishZone+'%';
+ $('fishResult').textContent='... fisgue na zona verde!';
+ $('fishBtn').textContent='FISGAR! (Espaço)';
+ sound('splash');updateHUD();save();
+}
+function fishStrike(){
+ if(fishState!=='run')return;
+ const hit=fishPos>=fishZone&&fishPos<=fishZone+FISH_W;
+ fishState='done';
+ if(!hit){
+  sound('error');$('fishResult').textContent='Escapou... jogue de novo!';
+  $('fishBtn').textContent='Jogar isca (Espaço)';updateHUD();save();return;
+ }
+ const hour=Math.floor(timeOfDay*24),night=(hour<6||hour>=18);
+ const w=[50,30,15,5];
+ if(state.weather==='chuva')w[2]+=12;
+ if(night){w[3]+=6;w[2]+=6;}
+ const tot=w[0]+w[1]+w[2]+w[3];let r=Math.random()*tot,fi=0;
+ while(r>w[fi]){r-=w[fi];fi++;}
+ const f=FISH[fi];
+ state.fish[f.id]++;state.stats.fishCaught++;
+ sound('coins');burst(player.position.x,1.4,player.position.z,0x6ec6f2,16,2,4);
+ checkAch();updateHUD();save();refreshFishCollection();
+ $('fishResult').textContent=`Pegou ${f.icon} ${f.name}! Vale ${f.price} moedas.`;
+ $('fishBtn').textContent='Jogar isca (Espaço)';
+}
+$('fishBtn').onclick=()=>{if(fishState==='run')fishStrike();else fishCast();};
+$('fishClose').onclick=()=>{fishOpen=false;fishState='idle';$('fish').style.display='none'};
+// ===== Presentes e amizade =====
+function npcNear(){
+ for(const id of ['vil','marta','tome']){
+  const P=NPCS[id].pos;
+  if(Math.hypot(player.position.x-P[0],player.position.z-P[1])<2.6)return id;
+ }
+ return null;
+}
+function nearestRock(){
+ let bi=-1,bd=2.3;
+ ROCKS.forEach((rk,i)=>{
+  if(state.rocks[i]<=0)return;
+  const d=Math.hypot(player.position.x-rk.x,player.position.z-rk.z);
+  if(d<bd){bd=d;bi=i;}
+ });
+ return bi;
+}
+function heartsTxt(p){const f=Math.floor(p/2),h=p%2;return '❤️'.repeat(f)+(h?'💗':'')+'🤍'.repeat(5-f-h);}
+let giftNPC='vil';
+function giftValue(id,item){
+ const N=NPCS[id];
+ if(N.loveFish&&item.fish)return 3;
+ if(N.love===item.crop||N.love===item.dish)return 3;
+ if(N.like===item.crop||N.like===item.dish)return 2;
+ return 1;
+}
+function openGift(id){
+ giftNPC=id;giftOpen=true;refreshGift();
+ $('gift').style.display='grid';
+}
+function refreshGift(){
+ const N=NPCS[giftNPC],pts=state.npc[giftNPC];
+ const boon=pts>=6?`<br>✨ Benefício ativo: ${N.boon}`:`<br><small>6+ pontos: ${N.boon}</small>`;
+ $('giftNPC').innerHTML=`<b>${N.name}</b> · ${heartsTxt(pts)} (${pts}/10)<br><small>Ama: ${N.gift} (+3) · 1 presente por dia</small>${boon}`;
+ if(state.giftDay[giftNPC]===state.day){$('giftList').innerHTML='Já presenteou hoje. Volte amanhã! 💝';return}
+ let html='';
+ crops.forEach((c,i)=>{
+  if(state.bag[i]>0)html+=`<button data-gc="${i}">Dar ${c.icon} ${c.name} (${state.bag[i]})</button> `;
+ });
+ RECIPES.forEach(r=>{
+  if(state.dishes[r.id]>0)html+=`<button data-gd="${r.id}">Dar ${r.icon} ${r.name} (${state.dishes[r.id]})</button> `;
+ });
+ FISH.forEach(f=>{
+  if(state.fish[f.id]>0)html+=`<button data-gf="${f.id}">Dar ${f.icon} ${f.name} (${state.fish[f.id]})</button> `;
+ });
+ $('giftList').innerHTML=html||'Sacola vazia — colha algo primeiro!';
+}
+$('giftList').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b)return;
+ let item=null;
+ if(b.dataset.gc!==undefined){const i=+b.dataset.gc;if(state.bag[i]<=0)return;state.bag[i]--;item={crop:i,label:crops[i].name};}
+ else if(b.dataset.gd){const r=RECIPES.find(x=>x.id===b.dataset.gd);if(!r||state.dishes[r.id]<=0)return;state.dishes[r.id]--;item={dish:r.id,label:r.name};}
+ else if(b.dataset.gf){const f=FISH.find(x=>x.id===b.dataset.gf);if(!f||state.fish[f.id]<=0)return;state.fish[f.id]--;item={fish:f.id,label:f.name};}
+ else return;
+ const pts=giftValue(giftNPC,item);
+ state.npc[giftNPC]=Math.min(10,state.npc[giftNPC]+pts);
+ state.giftDay[giftNPC]=state.day;
+ sound('win');burst(player.position.x,1.4,player.position.z,0xf28ab0,14,2,3.5);
+ checkAch();updateHUD();save();refreshGift();
+ toast(`${NPCS[giftNPC].name} adorou! +${pts} 💗`);
+});
+$('giftClose').onclick=()=>{giftOpen=false;$('gift').style.display='none'};
+// ===== Painel da fazenda =====
+function refreshFarm(){
+ let ready=0,wilt=0;
+ state.plots.forEach((p,i)=>{
+  if(!plotActive(i)||p.type<0||p.dead)return;
+  const need=effDays(p.type);
+  if(p.age>=need){ready++;if(p.ripe>0)wilt++;}
+ });
+ const season=seasonOf(state.day);
+ const ores=ORES.map(o=>`${o.icon}${state.ore[o.id]}`).join(' ');
+ $('farmInfo').innerHTML=
+  `Lucro por cultura:<br>`+crops.map((c,i)=>`${c.icon} ${c.name}: <b>${state.profit[i]}</b>`).join(' · ')+`<br>`+
+  `🌾 Prontas: <b>${ready}</b>${wilt?` · ⚠️ ${wilt} apodrecendo!`:''}<br>`+
+  `⛏️ Minério: ${ores} · 🪱 Iscas: ${state.bait}<br>`+
+  `🔧 ${TIER_N[state.tools.hoe]} · ${TIER_N[state.tools.can]} · ${TIER_N[state.tools.scythe]}<br>`+
+  `🔮 Amanhã: ${wIconFor(state.forecast[0],season)} · Depois: ${wIconFor(state.forecast[1],season)}`;
+ $('farm').style.display='grid';farmOpen=true;
+}
+$('farmBtn').onclick=()=>{if(!farmOpen)sound('select');refreshFarm();};
+$('farmClose').onclick=()=>{farmOpen=false;$('farm').style.display='none'};
+// ===== Interiores, baú, guarda-roupa, adega, prefeito =====
+function enterInterior(which,x,z){
+ savedOut={x:player.position.x,z:player.position.z};
+ mounted=null;player.visible=true;inInterior=which;
+ player.position.set(x,0,z);sound('select');updateHUD();save();
+}
+function exitInterior(){player.position.set(savedOut.x,0,savedOut.z);inInterior=null;sound('select');updateHUD();}
+function refreshTravel(){
+ const here=regionOf(player.position.x,player.position.z);
+ $('travelList').innerHTML=TOTEMS.filter(t=>t.n!==here).map(t=>`<button data-tv="${TOTEMS.indexOf(t)}">🌀 Ir para ${t.n}</button>`).join('');
+}
+$('travelList').addEventListener('click',e=>{
+ const b=e.target.closest('button');if(!b||b.dataset.tv===undefined)return;
+ const T=TOTEMS[+b.dataset.tv];
+ mounted=null;player.visible=true;
+ player.position.set(T.x,0,T.z+1.5);
+ travelOpen=false;$('travel').style.display='none';
+ sound('select');updateHUD();save();toast('🌀 '+T.n+'!');
+});
+$('travelClose').onclick=()=>{travelOpen=false;$('travel').style.display='none'};
+function refreshChest(){
+ const c=state.chest;
+ $('chestInfo').innerHTML=
+  `Sacola: `+state.bag.map((n,i)=>`${crops[i].icon}${n}`).join(' ')+` · 🍷${state.wine} 🪵${state.wood}<br>`+
+  `Baú: `+c.bag.map((n,i)=>`${crops[i].icon}${n}`).join(' ')+` · 🍷${c.wine} 🪵${c.wood}`;
+}
+$('chestStore').onclick=()=>{
+ const c=state.chest;
+ for(let i=0;i<5;i++){c.bag[i]+=state.bag[i];state.bag[i]=0;}
+ c.wine+=state.wine;state.wine=0;c.wood+=state.wood;state.wood=0;
+ sound('buy');updateHUD();save();refreshChest();toast('Guardado! 📦');
+};
+$('chestTake').onclick=()=>{
+ const c=state.chest;
+ for(let i=0;i<5;i++){state.bag[i]+=c.bag[i];c.bag[i]=0;}
+ state.wine+=c.wine;c.wine=0;state.wood+=c.wood;c.wood=0;
+ sound('coins');updateHUD();save();refreshChest();toast('Retirado! 📦');
+};
+$('chestClose').onclick=()=>{chestOpen=false;$('chest').style.display='none'};
+const SKINS=[0xf2c79d,0xc98d5f,0x8a5a3b],SHIRTS=[0x547b97,0x9e6fa8,0x7a9e5f,0xc96c50],HATS=[0xe4bd71,0xd5a55b,0x8a5a3c,0x5f7fa8];
+function applyOutfit(){
+ skinMat.color.setHex(SKINS[state.outfit.skin]);
+ shirtMat.color.setHex(SHIRTS[state.outfit.shirt]);
+ hatMat.color.setHex(HATS[state.outfit.hat]);
+}
+function refreshDresser(){
+ $('dressSkin').textContent=`Pele (${state.outfit.skin+1}/3) · 20`;
+ $('dressShirt').textContent=`Roupa (${state.outfit.shirt+1}/4) · 20`;
+ $('dressHat').textContent=`Chapéu (${state.outfit.hat+1}/4) · 20`;
+}
+function dressChange(k){
+ const c=cost(20);
+ if(state.money<c){sound('error');toast(`Moedas insuficientes (${c}).`);return}
+ state.money-=c;
+ state.outfit[k]=(state.outfit[k]+1)%(k==='shirt'||k==='hat'?4:3);
+ applyOutfit();sound('buy');updateHUD();save();refreshDresser();toast('Visual novo! 👕');
+}
+$('dressSkin').onclick=()=>dressChange('skin');
+$('dressShirt').onclick=()=>dressChange('shirt');
+$('dressHat').onclick=()=>dressChange('hat');
+$('dressClose').onclick=()=>{dressOpen=false;$('dresser').style.display='none'};
+function cellarTap(i){
+ const b=state.cellar[i];
+ if(!b){
+  if(state.bag[4]<3){sound('error');toast('Precisa de 3 morangos. 🍓');return}
+  state.bag[4]-=3;state.cellar[i]={d:0};
+  sound('splash');updateHUD();save();refreshBarrels();toast('Morangos no barril! 🍷');
+ }else if(b.d>=3){
+  state.cellar[i]=null;state.wine++;
+  sound('coins');updateHUD();save();refreshBarrels();toast('Vinho pronto! +1 🍷');
+ }else toast(`Faltam ${3-b.d} dias... 🍷`);
+}
+function mayorTalk(){
+ const s=state.mayorStep;
+ if(s>=4){toast('A vila prospera graças a você! 🏅');return}
+ if(s===0){
+  if(state.bag[0]<4){toast('Prefeito: traga 4 cenouras! 🥕');return}
+  state.bag[0]-=4;state.money+=80;state.mayorStep=1;
+  sound('win');checkAch();updateHUD();save();toast('Prefeito: ótimo! +80 moedas.');
+ }else if(s===1){
+  if(state.bag[2]<3){toast('Prefeito: traga 3 abóboras! 🎃');return}
+  state.bag[2]-=3;state.mayorStep=2;
+  if(state.rows<6){state.rows++;redraw();toast('Prefeito: +8 canteiros de presente! 🌱');}
+  else{state.money+=150;toast('Prefeito: +150 moedas!');}
+  sound('win');checkAch();updateHUD();save();
+  }else if(s===2){
+   if(state.fish.dourado<1){toast('Prefeito: traga 1 dourado! 👑');return}
+  state.fish.dourado--;state.money+=300;state.mayorStep=3;
+  sound('win');checkAch();updateHUD();save();toast('Prefeito: magnífico! +300.');
+ }else{
+  if(state.bag[4]<5){toast('Prefeito: traga 5 morangos! 🍓');return}
+  state.bag[4]-=5;state.money+=500;state.mayorStep=4;
+  sound('win');checkAch();updateHUD();save();toast('HERÓI DA VILA! +500 🏅');
+ }
+}
+function kidTalk(k){
+ const key=k===1?'kid1Day':'kid2Day';
+ if(state[key]===state.day){toast('Volte amanhã! 👋');return}
+ if(k===1){
+  if(state.eggPos.length<1){toast('Criança: me dá um ovo? 🥚');return}
+  state.eggPos.pop();syncEggs();state.money+=30;state[key]=state.day;
+  sound('coins');updateHUD();save();toast('+30 moedas! Obrigado! 🥚');
+ }else{
+  const f=FISH.find(f=>state.fish[f.id]>0);
+  if(!f){toast('Criança: me dá um peixe? 🐟');return}
+  state.fish[f.id]--;state.money+=40;state[key]=state.day;
+  sound('coins');updateHUD();save();toast(`+40 moedas! Adorei o ${f.name}! 🐟`);
+ }
+}
+// ===== Efeitos, clima, ovos, aspersor e touch =====
+// Partículas (juice).
+const PMAX=240;
+const pGeo=new THREE.BufferGeometry();
+const pPos=new Float32Array(PMAX*3),pCol=new Float32Array(PMAX*3),
+ pVel=new Float32Array(PMAX*3),pLife=new Float32Array(PMAX);
+for(let i=0;i<PMAX;i++)pPos[i*3+1]=-999;
+pGeo.setAttribute('position',new THREE.BufferAttribute(pPos,3));
+pGeo.setAttribute('color',new THREE.BufferAttribute(pCol,3));
+const points=new THREE.Points(pGeo,new THREE.PointsMaterial({size:.22,vertexColors:true,transparent:true,opacity:.95,depthWrite:false}));
+points.frustumCulled=false;scene.add(points);
+let pHead=0;
+function burst(x,y,z,hex,n=14,spread=2.2,up=3.5){
+ const c=new THREE.Color(hex);
+ for(let k=0;k<n;k++){
+  const i=pHead;pHead=(pHead+1)%PMAX;
+  pPos[i*3]=x;pPos[i*3+1]=y;pPos[i*3+2]=z;
+  const a=Math.random()*Math.PI*2,r=Math.random()*spread;
+  pVel[i*3]=Math.cos(a)*r;pVel[i*3+1]=Math.random()*up+1;pVel[i*3+2]=Math.sin(a)*r;
+  pLife[i]=.6+Math.random()*.4;
+  pCol[i*3]=c.r;pCol[i*3+1]=c.g;pCol[i*3+2]=c.b;
+ }
+ pGeo.attributes.color.needsUpdate=true;
+}
+function updateParticles(dt){
+ for(let i=0;i<PMAX;i++){
+  if(pLife[i]<=0)continue;
+  pLife[i]-=dt;
+  if(pLife[i]<=0){pPos[i*3+1]=-999;continue}
+  pVel[i*3+1]-=9*dt;
+  pPos[i*3]+=pVel[i*3]*dt;pPos[i*3+1]+=pVel[i*3+1]*dt;pPos[i*3+2]+=pVel[i*3+2]*dt;
+  if(pPos[i*3+1]<0){pPos[i*3+1]=0;pVel[i*3+1]*=-.3}
+ }
+ pGeo.attributes.position.needsUpdate=true;
+}
+// Chuva / neve.
+const RAIN_N=350;
+const rGeo=new THREE.BufferGeometry();
+const rPos=new Float32Array(RAIN_N*3);
+function resetDrop(i,top){
+ const px=inInterior?0:player.position.x,pz=inInterior?0:player.position.z;
+ rPos[i*3]=px+Math.random()*46-23;rPos[i*3+1]=top?15+Math.random()*8:Math.random()*20;rPos[i*3+2]=pz+Math.random()*40-20;
+}
+for(let i=0;i<RAIN_N;i++)resetDrop(i,false);
+rGeo.setAttribute('position',new THREE.BufferAttribute(rPos,3));
+const rMat=new THREE.PointsMaterial({color:0x9fd4ff,size:.14,transparent:true,opacity:.75,depthWrite:false});
+const rain=new THREE.Points(rGeo,rMat);rain.frustumCulled=false;rain.visible=false;scene.add(rain);
+function updateRain(dt,snow){
+ const sp=snow?3.5:20;
+ for(let i=0;i<RAIN_N;i++){
+  rPos[i*3+1]-=sp*dt;
+  if(snow)rPos[i*3]+=Math.sin(time*2+i)*dt*.8;
+  if(rPos[i*3+1]<0)resetDrop(i,true);
+ }
+ rGeo.attributes.position.needsUpdate=true;
+}
+// Estrelas.
+const starGeo=new THREE.BufferGeometry();
+const SN=220,sPos=new Float32Array(SN*3);
+for(let i=0;i<SN;i++){const a=Math.random()*Math.PI*2,e=Math.random()*Math.PI/2.5+.1,r=85;
+ sPos[i*3]=Math.cos(a)*Math.cos(e)*r;sPos[i*3+1]=Math.sin(e)*r;sPos[i*3+2]=Math.sin(a)*Math.cos(e)*r;}
+starGeo.setAttribute('position',new THREE.BufferAttribute(sPos,3));
+const starMat=new THREE.PointsMaterial({color:0xfff6d8,size:1.6,sizeAttenuation:false,transparent:true,opacity:0,depthWrite:false});
+const stars=new THREE.Points(starGeo,starMat);stars.frustumCulled=false;scene.add(stars);
+// Lampiões.
+const lampLights=[],lampBulbs=[];
+function lamp(x,z){
+ box(.18,2.6,.18,0x4a3b2c,x,1.3,z);
+ const bulb=new THREE.Mesh(new THREE.SphereGeometry(.28,12,10),
+  new THREE.MeshStandardMaterial({color:0xfff2c9,emissive:0xffc86e,emissiveIntensity:0}));
+ bulb.position.set(x,2.8,z);scene.add(bulb);lampBulbs.push(bulb);
+ const l=new THREE.PointLight(0xffd9a0,0,20);l.position.set(x,2.8,z);scene.add(l);lampLights.push(l);
+}
+lamp(-8,-6.5);lamp(11,8.5);
+// Aspersor.
+const sprinkler=new THREE.Group();sprinkler.position.set(-4.9,0,0.1);scene.add(sprinkler);
+box(.16,1,.16,0x5a6b7a,0,.5,0,sprinkler);
+const sprHead=box(.8,.14,.14,0x3d4c59,0,1.05,0,sprinkler);
+sprinkler.visible=state.aspersor;
+// Ovos.
+const eggGroup=new THREE.Group();scene.add(eggGroup);
+function syncEggs(){
+ while(eggGroup.children.length)eggGroup.remove(eggGroup.children[0]);
+ state.eggPos.forEach(e=>ball(.13,0xfff6e8,e[0],.15,e[1],eggGroup));
+}
+syncEggs();
+// Céu / dia-noite / estações.
+const seasonGround={Primavera:0x7ea961,'Verão':0x6da34e,Outono:0xa89a55,Inverno:0xdfe8ea};
+const skyDay=new THREE.Color(0xb8dbd0),skyNight=new THREE.Color(0x141f38),
+ skyDusk=new THREE.Color(0xe8a06c),skyGrey=new THREE.Color(0x8a9494),tmpSky=new THREE.Color();
+function updateSky(dt){
+ const a=(timeOfDay-0.25)*Math.PI*2,elev=Math.sin(a);
+ const dayF=THREE.MathUtils.clamp(elev*2.5,0,1);
+ tmpSky.copy(skyNight).lerp(skyDay,dayF);
+ const duskF=THREE.MathUtils.clamp(1-Math.abs(elev)*4,0,1)*(elev>-0.08?1:0);
+ tmpSky.lerp(skyDusk,duskF*.55);
+ const cloud=state.weather==='chuva'?0.55:state.weather==='nublado'?0.3:0;
+ tmpSky.lerp(skyGrey,cloud*.7*(0.3+0.7*dayF));
+ scene.background.copy(tmpSky);scene.fog.color.copy(tmpSky);
+ const dim=state.weather==='chuva'?0.45:state.weather==='nublado'?0.75:1;
+ sun.intensity=3*THREE.MathUtils.clamp(elev,0,1.2)*dim+(elev<=0?0.12:0);
+ sun.color.setHex(elev<=0?0x8fb0ff:(duskF>0.4?0xffb36e:0xffe3ab));
+ sun.position.set(Math.cos(a)*28,Math.max(elev,-0.15)*30+6,12);
+ hemi.intensity=(0.25+2.15*dayF)*(1-cloud*.4);
+ const night=1-dayF;
+ lampLights.forEach(l=>l.intensity=night*2.2);
+ lampBulbs.forEach(b=>b.material.emissiveIntensity=night*2);
+ starMat.opacity=night*.9;
+ const season=seasonOf(state.day);
+ const snow=state.weather==='chuva'&&season==='Inverno';
+ rain.visible=state.weather==='chuva';
+ rMat.color.setHex(snow?0xffffff:0x9fd4ff);
+ ground.material=mat(seasonGround[season]);
+  nightF=night;winMat.emissiveIntensity=night*1.6;
+  scarf.visible=season==='Inverno';
+  strawBrim.visible=season==='Verão';hatBrim.visible=season!=='Verão';
+  vitAutumn.visible=season==='Outono';vitWinter.visible=season==='Inverno';
+  vitSpring.visible=season==='Primavera';vitSummer.visible=season==='Verão';
+  festDecor.visible=isFestivalDay();
+  present.visible=isFestivalDay()&&state.festClaimed!==state.day;
+ puddleGroup.visible=state.weather==='chuva';
+ snowGroup.visible=season==='Inverno';
+ leaves.visible=season==='Outono';
+ if(rain.visible)updateRain(dt,snow);
+ if(leaves.visible)updateLeaves(dt);
+}
+// Joystick + botões touch.
+const joy={x:0,z:0,id:null};
+const joyEl=$('joy'),knob=$('knob');
+function joySet(e){
+ const r=joyEl.getBoundingClientRect();
+ let dx=(e.clientX-(r.left+r.width/2))/(r.width/2);
+ let dz=(e.clientY-(r.top+r.height/2))/(r.height/2);
+ const l=Math.hypot(dx,dz);
+ if(l>1){dx/=l;dz/=l}
+ if(l<0.15){dx=0;dz=0}
+ joy.x=dx;joy.z=dz;
+ knob.style.transform=`translate(${dx*32}px,${dz*32}px)`;
+}
+joyEl.addEventListener('pointerdown',e=>{e.preventDefault();joy.id=e.pointerId;joyEl.setPointerCapture(e.pointerId);joySet(e);});
+joyEl.addEventListener('pointermove',e=>{if(e.pointerId===joy.id)joySet(e);});
+['pointerup','pointercancel'].forEach(ev=>joyEl.addEventListener(ev,e=>{if(e.pointerId===joy.id){joy.id=null;joy.x=0;joy.z=0;knob.style.transform='translate(0,0)';}}));
+$('btnE').addEventListener('pointerdown',e=>{e.preventDefault();interact();});
+$('btnR').addEventListener('pointerdown',e=>{e.preventDefault();sleep();});
+if(matchMedia('(pointer:coarse)').matches||'ontouchstart'in window)document.body.classList.add('touch');
+// Órbita da terceira pessoa estilo GTA: arrastar p/ girar, scroll p/ zoom.
+let camYaw=0,camPitch=0.35,camDist=7.5,orbitId=null,lastMX=0,lastMY=0;
+function anyModal(){return shopOpen||questOpen||kitchenOpen||fishOpen||giftOpen||farmOpen||travelOpen||chestOpen||dressOpen;}
+const cvs=renderer.domElement;
+cvs.addEventListener('pointerdown',e=>{
+ if(state.camMode!==2||paused||anyModal())return;
+ if(e.pointerType==='mouse'&&e.button===2){aimHeld=true;return}
+ if(e.pointerType==='mouse'&&e.button!==0)return;
+ orbitId=e.pointerId;lastMX=e.clientX;lastMY=e.clientY;
+ try{cvs.setPointerCapture(e.pointerId)}catch{}
+ cvs.style.cursor='grabbing';
+});
+cvs.addEventListener('pointerup',e=>{if(e.button===2)aimHeld=false;});
+cvs.addEventListener('contextmenu',e=>e.preventDefault());
+cvs.addEventListener('pointermove',e=>{
+ if(e.pointerId!==orbitId||paused)return;
+ camYaw-=(e.clientX-lastMX)*0.0052;
+ camPitch=THREE.MathUtils.clamp(camPitch+(e.clientY-lastMY)*0.004,0.06,1.25);
+ lastMX=e.clientX;lastMY=e.clientY;
+});
+['pointerup','pointercancel'].forEach(ev=>cvs.addEventListener(ev,e=>{
+ if(e.pointerId===orbitId){orbitId=null;cvs.style.cursor=state.camMode===2?'grab':'default';}
+}));
+cvs.addEventListener('wheel',e=>{
+ if(state.camMode!==2)return;
+ camDist=THREE.MathUtils.clamp(camDist+e.deltaY*0.01,4,12);
+},{passive:true});
+function updateCompass(){
+ const dirs=['N','NE','L','SE','S','SO','O','NO'];
+  const idx=Math.round((Math.PI-player.rotation.y)/(Math.PI/4));
+ $('compass').textContent='🧭 '+dirs[((idx%8)+8)%8];
+}
+function drawMinimap(){
+ const cv=$('minimap');if(!cv)return;
+ const ctx=cv.getContext('2d');
+ if(inInterior){ctx.fillStyle='#20392f';ctx.fillRect(0,0,140,140);ctx.fillStyle='#ffe4a5';ctx.font='28px sans-serif';ctx.textAlign='center';ctx.fillText('🏠',70,80);return}
+ const sx=140/92,sz=140/80;
+ const X=x=>(x+46)*sx,Z=z=>(z+40)*sz;
+ ctx.fillStyle='#20392f';ctx.fillRect(0,0,140,140);
+ ctx.fillStyle='#2b6f7e';
+ ctx.beginPath();ctx.ellipse(X(14),Z(-10),4.4*sx,3.1*sz,0,0,7);ctx.fill();
+ plots.forEach((p,i)=>{
+  if(!plotActive(i))return;
+  const s=state.plots[i];
+  ctx.fillStyle=s.dead?'#777':s.type<0?(s.water?'#5a4632':'#8d6143'):(s.age>=effDays(s.type)?'#'+crops[s.type].color.toString(16).padStart(6,'0'):'#4c8041');
+  ctx.fillRect(X(p.x)-3,Z(p.z)-3,6,6);
+ });
+ ctx.fillStyle='#f0d5a0';ctx.fillRect(X(-8)-4,Z(-11)-3,8,6);
+ ctx.fillStyle='#c96c50';ctx.fillRect(X(11)-3,Z(6)-2,6,4);
+ ctx.fillStyle='#888';ctx.fillRect(X(-19.5)-3,Z(-14.5)-2,6,4);
+ ctx.fillStyle='#e08a3c';ctx.fillRect(X(16.5)-2,Z(-2)-2,4,4);
+ ctx.fillStyle='#8a6238';ctx.fillRect(X(19)-3,Z(-10)-1,6,2);
+ ctx.fillStyle='#e8d5a8';ctx.fillRect(X(30)-5,Z(8)-5,10,10);
+ ctx.fillStyle='#6ec6f2';
+ TOTEMS.forEach(t=>{ctx.beginPath();ctx.arc(X(t.x),Z(t.z),2,0,7);ctx.fill();});
+ if(state.vehOwn.cart){ctx.fillStyle='#c96c50';ctx.beginPath();ctx.arc(X(state.veh.cart.x),Z(state.veh.cart.z),2,0,7);ctx.fill();}
+ if(state.vehOwn.bike){ctx.fillStyle='#6ec6f2';ctx.beginPath();ctx.arc(X(state.veh.bike.x),Z(state.veh.bike.z),2,0,7);ctx.fill();}
+ if(state.vehOwn.boat){ctx.fillStyle='#fff';ctx.beginPath();ctx.arc(X(state.veh.boat.x),Z(state.veh.boat.z),2,0,7);ctx.fill();}
+ ctx.fillStyle='#e8b98a';
+ for(const id of ['vil','marta','tome']){const P=NPCS[id].pos;ctx.beginPath();ctx.arc(X(P[0]),Z(P[1]),2.5,0,7);ctx.fill();}
+ ctx.fillStyle='#ffd34d';ctx.beginPath();ctx.arc(X(dog.position.x),Z(dog.position.z),2.5,0,7);ctx.fill();
+ ctx.fillStyle='#fff';
+ ctx.save();ctx.translate(X(player.position.x),Z(player.position.z));
+ ctx.rotate(Math.atan2(Math.sin(player.rotation.y),-Math.cos(player.rotation.y)));
+ ctx.beginPath();ctx.moveTo(0,-5);ctx.lineTo(3.5,4);ctx.lineTo(-3.5,4);ctx.closePath();ctx.fill();
+ ctx.restore();
+}
+const clock=new THREE.Clock(),target=new THREE.Vector3(),camPos=new THREE.Vector3(),lookSm=new THREE.Vector3(0,1.6,0),tmpLook=new THREE.Vector3();
+camera.position.set(19,24,28);
+function frame(){
+ requestAnimationFrame(frame);
+ const dt=Math.min(clock.getDelta(),.05);
+ if(!paused){
+  time+=dt;timeOfDay=(timeOfDay+dt/300)%1;
+  let x=0,z=0;
+   if(!anyModal()){
+   x=(keys.d||keys.arrowright?1:0)-(keys.a||keys.arrowleft?1:0);
+   z=(keys.s||keys.arrowdown?1:0)-(keys.w||keys.arrowup?1:0);
+   x+=joy.x;z+=joy.z;
+  }
+   const length=Math.hypot(x,z);
+   isMoving=length>0;
+  if(length){
+   if(state.tut===0)tutGo(0);
+   let vx,vz;
+   if(state.camMode===2){
+    // Terceira pessoa: WASD relativo à câmera (W = para frente).
+    let fx=player.position.x-camera.position.x,fz=player.position.z-camera.position.z;
+    const fl=Math.hypot(fx,fz)||1;fx/=fl;fz/=fl;
+    vx=fx*(-z)+(-fz)*x;vz=fz*(-z)+fx*x;
+    const ml=Math.hypot(vx,vz)||1;vx/=ml;vz/=ml;
+   }else if(state.camMode===1){vx=x/length;vz=z/length;}
+   else{const s=.7071/length;vx=(x+z)*s;vz=(z-x)*s;}
+    const spd=(mounted==='cart'?(state.hay>0?9:5):mounted==='bike'?7.5:mounted==='boat'?6:5)*(mounted!=='boat'&&onRoad(player.position.x,player.position.z)?1.2:1);
+    const nx=THREE.MathUtils.clamp(player.position.x+vx*dt*spd,-44,44);
+    const nz=THREE.MathUtils.clamp(player.position.z+vz*dt*spd,-38,38);
+    let blocked=(nx>-11.5&&nx<-4.5&&nz>-13.7&&nz<-8.6)||
+     (nx>8.3&&nx<13.7&&nz>4.6&&nz<7.4)||
+     ((nx-14)**2/24+(nz+10)**2/13<1)||
+     ((nx+4)**2+(nz+6)**2<.8)||((nx-6.5)**2+(nz-9.5)**2<.5)||
+     ((nx-16.5)**2+(nz+2)**2<1)||((nx+20)**2+(nz+15)**2<1);
+    if(mounted==='boat')blocked=(((nx-14)**2)/24+((nz+10)**2)/13>=1);
+    if(inInterior){
+     const zb=inInterior==='house'?[96,104]:inInterior==='cellar'?[84,92]:[116,124];
+     let ix=THREE.MathUtils.clamp(nx,95,105),iz=THREE.MathUtils.clamp(nz,zb[0],zb[1]);
+     if(inInterior==='house'&&Math.abs(ix-100)<1.4&&Math.abs(iz-97.5)<1.6)ix=player.position.x;
+     if(inInterior==='house'&&Math.abs(ix-103)<1.2&&Math.abs(iz-103)<1.2)ix=player.position.x;
+     player.position.x=ix;player.position.z=iz;
+    }else if(!blocked){player.position.x=nx;player.position.z=nz}
+   player.rotation.y=Math.atan2(vx,vz);
+   legL.rotation.x=Math.sin(time*12)*.6;legR.rotation.x=-legL.rotation.x;
+   armL.rotation.x=-legL.rotation.x*.8;armR.rotation.x=legL.rotation.x*.8;
+  }else{legL.rotation.x=0;legR.rotation.x=0;armL.rotation.x=0;armR.rotation.x=0}
+  near=-1;let best=2;
+  plots.forEach((p,i)=>{if(!plotActive(i))return;const d=distance(p.x,p.z);if(d<best){best=d;near=i}});
+  select.visible=near>=0&&!anyModal();
+  if(near>=0)select.position.set(plots[near].x,.14,plots[near].z);
+  const eggI=nearestEgg(),chick=chickenNear();
+  let hint='Explore a fazenda · WASD para andar';
+  if(eggI>=0)hint='E · Coletar ovo 🥚';
+  else if(chick)hint=state.fed?'Galinhas alimentadas ✓':'E · Alimentar galinhas 🐔';
+  else if(npcNear())hint='E · Presentear 🎁';
+  else if(nearestRock()>=0)hint='E · Minerar ⛏️';
+  else if(distance(16.5,-2)<2.5)hint='E · Fundir minério 🔥';
+  else if(isFestivalDay()&&state.festClaimed!==state.day&&distance(13.8,8.6)<2.5)hint='E · Presente do festival 🎁';
+  else if(distance(20.3,-10)<2.6)hint='E · Pescar 🎣';
+  else if(mounted)hint='E · Desmontar';
+  else if(!inInterior&&(Math.hypot(player.position.x-state.veh.cart.x,player.position.z-state.veh.cart.z)<2.2||Math.hypot(player.position.x-state.veh.bike.x,player.position.z-state.veh.bike.z)<2.2||Math.hypot(player.position.x-state.veh.boat.x,player.position.z-state.veh.boat.z)<2.6))hint='E · Montar veículo';
+  else if(!inInterior&&distance(0,-14)<2.5)hint='E · Pintar veículos 🎨';
+  else if(!inInterior&&distance(-8,-8.7)<2)hint='E · Entrar em casa 🏠';
+  else if(!inInterior&&distance(14,8.5)<2)hint='E · Entrar na loja 🏪';
+  else if(!inInterior&&TOTEMS.some(t=>Math.hypot(player.position.x-t.x,player.position.z-t.z)<2.5))hint='E · Viajar 🌀';
+  else if(nearestTree()>=0)hint='E · Cortar madeira 🪓';
+  else if(!inInterior&&distance(30,6.2)<2.6)hint='E · Falar com o prefeito 🏅';
+  else if(near>=0){
+   const p=state.plots[near],need=p.type>=0?effDays(p.type):0;
+   hint=p.type<0?`E · Plantar ${crops[selected].name}`:
+    p.dead?'E · Limpar canteiro (apodreceu!)':
+    p.age>=need?(p.ripe>0?'E · Colher AGORA — vai apodrecer!':`E · Colher ${crops[p.type].name}`):
+    !p.water?'E · Regar (atinge vizinhos!)':'Regado · Durma para crescer';
+  }
+  if(distance(-8,-7.5)<3.5)hint='R · Dormir e começar um novo dia';
+  if(distance(11,6)<3.7)hint='E · Abrir o mercadinho';
+  if(inInterior==='house')hint='Cama, baú, guarda-roupa, fogão · porta sul sai';
+  else if(inInterior==='cellar')hint='Barris: 3 morangos viram vinho em 3 dias 🍷';
+  else if(inInterior==='shop')hint='Porta sul sai · prateleiras e o gato 🐱';
+  $('prompt').innerHTML=hint.replace(/^([A-Z1-5]) · /,'<kbd>$1</kbd> · ');
+  chickens.forEach((g,i)=>{
+   const a=time*.25+i*1.8;
+   g.position.set(1.8+Math.sin(a)*1.4,Math.abs(Math.sin(time*4+i))*.045,11+i*.75+Math.cos(a)*.5);
+   g.rotation.y=Math.cos(a)>0?Math.PI/2:-Math.PI/2;
+  });
+  // Aldeão encara o jogador.
+  vil.rotation.y=Math.atan2(player.position.x-11,player.position.z-4.7);
+  vil.position.y=Math.abs(Math.sin(time*2))*.03;
+  marta.rotation.y=Math.atan2(player.position.x+3.5,player.position.z+9.5);
+  tome.rotation.y=Math.atan2(player.position.x-18,player.position.z+7);
+  mayor.rotation.y=Math.atan2(player.position.x-30,player.position.z-6.2);
+  kid1.rotation.y=Math.atan2(player.position.x-27.5,player.position.z-10);
+  kid2.rotation.y=Math.atan2(player.position.x-32.5,player.position.z-10);
+  catTail.rotation.y=Math.sin(time*6)*.4;
+  // Cachorro segue o dono.
+  {
+   const dx=player.position.x-dog.position.x,dz=player.position.z-dog.position.z;
+   const dd=Math.hypot(dx,dz);
+   if(dd>1.6){dog.position.x+=dx/dd*dt*4.5;dog.position.z+=dz/dd*dt*4.5;dog.rotation.y=Math.atan2(dx,dz);}
+   dogTail.rotation.y=Math.sin(time*10)*.5;
+  }
+  // Patos no lago.
+  ducks.forEach((d,i)=>{
+   const a=time*.35+i*2.6;
+   d.position.set(14+Math.cos(a)*2.2,.12,-10+Math.sin(a)*1.3);
+   d.rotation.y=Math.atan2(-Math.sin(a),Math.cos(a));
+  });
+  // Borboletas de dia, vaga-lumes à noite.
+  butterflies.forEach(b=>{
+   b.g.visible=nightF<0.7;
+   if(!b.g.visible)return;
+   b.g.position.set(b.cx+Math.sin(time*.5+b.ph)*2,1.2+Math.sin(time*1.3+b.ph)*.4,b.cz+Math.cos(time*.4+b.ph)*2);
+   const f=.2+Math.abs(Math.sin(time*14+b.ph))*.7;
+   b.wl.rotation.z=f;b.wr.rotation.z=-f;
+  });
+  fMat.opacity=nightF;
+  if(nightF>0.02){
+   for(let i=0;i<FF;i++){
+    fPos[i*3]=fBase[i*3]+Math.sin(time*.8+fPh[i])*.6;
+    fPos[i*3+1]=fBase[i*3+1]+Math.sin(time*1.1+fPh[i]*2)*.3;
+    fPos[i*3+2]=fBase[i*3+2]+Math.cos(time*.6+fPh[i])*.6;
+   }
+   fGeo.attributes.position.needsUpdate=true;
+  }
+  // Toldo ondula, fogo crepita, fumaça da chaminé.
+  stallStrips.forEach((m,i)=>m.rotation.z=Math.sin(time*2+i*.7)*.05);
+  fire.scale.set(1+Math.sin(time*13)*.12,1+Math.sin(time*17)*.15,1);
+  smokeT+=dt;
+  if(smokeT>0.5){smokeT=0;burst(-6,6.2,-11.5,0xbbbbbb,2,.4,1.2);}
+  // Ferramenta na mão conforme o contexto.
+  let tool='none';
+  if(near>=0){const s=state.plots[near];
+   if(s.type<0)tool='hoe';
+   else if(!s.dead&&s.age<effDays(s.type)&&!s.water)tool='can';}
+  else if(state.bait>0&&(distance(20.3,-10)<4||distance(14,-10)<6))tool='rod';
+  toolHoe.visible=tool==='hoe';toolCan.visible=tool==='can';toolRod.visible=tool==='rod';
+  if(state.aspersor)sprHead.rotation.y+=dt*4;
+  millBlades.rotation.z+=dt*.8;
+  fishRipple.scale.setScalar(1+Math.sin(time*3)*.15);
+  waveRings.forEach(w=>{const t=((time*.25+w.ph)%1);w.m.scale.setScalar(1+t*3);w.m.material.opacity=.3*(1-t);});
+  lakeGlint.position.x=14+Math.sin(time*.4)*2;
+  lakeGlint.position.z=-10+Math.cos(time*.3)*1.2;
+  lake.material.roughness=.25+Math.sin(time*1.5)*.06;
+  // NPCs encaram o jogador.
+  marta.rotation.y=Math.atan2(player.position.x+3.5,player.position.z+9.5);
+  tome.rotation.y=Math.atan2(player.position.x-18,player.position.z+7);
+  // Chuva com som ambiente.
+  if(actx&&!state.muted){
+   if(!rainGain){
+    try{
+     const len=actx.sampleRate,buf=actx.createBuffer(1,len,actx.sampleRate);
+     const ch=buf.getChannelData(0);
+     for(let i=0;i<len;i++)ch[i]=Math.random()*2-1;
+     rainSrc=actx.createBufferSource();rainSrc.buffer=buf;rainSrc.loop=true;
+     const f=actx.createBiquadFilter();f.type='lowpass';f.frequency.value=900;
+     rainGain=actx.createGain();rainGain.gain.value=0;
+     rainSrc.connect(f);f.connect(rainGain);rainGain.connect(actx.destination);
+     rainSrc.start();
+    }catch{rainGain=null;}
+   }
+   if(rainGain)rainGain.gain.value+=(((state.weather==='chuva')?0.035:0)-rainGain.gain.value)*Math.min(1,dt*2);
+  }else if(rainGain){try{rainGain.gain.value=0;}catch{}}
+  // Pássaros do amanhecer.
+  const hr=Math.floor(timeOfDay*24),dawn=hr>=5&&hr<=7;
+  birds.forEach((b,i)=>{
+   b.g.visible=dawn;
+   if(!dawn)return;
+   const a=time*.15+b.ph;
+   b.g.position.set(Math.cos(a)*24,17+i*2,Math.sin(a)*24);
+   b.g.rotation.y=-a;
+   const f=Math.sin(time*20+b.ph)*.6;
+   b.w1.rotation.x=f;b.w2.rotation.x=-f;
+  });
+  birdT+=dt;
+  if(dawn&&birdT>2.5){birdT=0;if(Math.random()<.6&&!state.muted){tone(2400,0,.07,'sine',.035);tone(3000,.08,.07,'sine',.03);}}
+  // Fogos no festival.
+  if(isFestivalDay()&&nightF>0.6){
+   fwT+=dt;
+   if(fwT>1.4){fwT=0;burst(Math.random()*30-10,11+Math.random()*6,Math.random()*20-5,[0xffd76c,0xe84a5f,0x6ec6f2,0x9fe870][(Math.random()*4)|0],30,4,2);sound('coins');}
+  }
+  // Minigame da pesca.
+  if(fishOpen&&fishState==='run'){
+   fishPos+=fishDir*dt*55;
+   if(fishPos>=100){fishPos=100;fishDir=-1}
+   if(fishPos<=0){fishPos=0;fishDir=1}
+   $('fishMarker').style.left=`calc(${fishPos}% - 3px)`;
+  }
+  miniT+=dt;
+  if(miniT>0.3){miniT=0;drawMinimap();updateCompass();}
+  const rg=regionOf(player.position.x,player.position.z);
+  if(rg!==lastRegion){lastRegion=rg;toast('📍 '+rg);}
+  travCrystals.forEach((c,i)=>{c.position.y=2.1+Math.sin(time*2+i)*.15;c.rotation.y+=dt;});
+  millBlades.rotation.z+=dt*.8;millBlades2.rotation.z-=dt*.6;
+  if(mounted){
+   state.veh[mounted]={x:player.position.x,z:player.position.z};
+   const V=mounted==='cart'?cartG:mounted==='bike'?bikeG:boatG;
+   V.position.set(player.position.x,mounted==='boat'?.1+Math.sin(time*2)*.05:0,player.position.z);
+   V.rotation.y=player.rotation.y;
+   const spin=isMoving?dt*6:0;
+   (mounted==='cart'?cartWheels:bikeWheels).forEach(w=>w.rotation.x+=spin);
+   if(mounted==='cart'&&isMoving&&state.hay>0)state.hay=Math.max(0,state.hay-dt*2);
+  }
+  updateParticles(dt);
+  updateSky(dt);
+ }
+ target.set(player.position.x*.35,0,player.position.z*.35);
+ if(state.camMode===2){
+  if(cineMode)camYaw+=dt*.15;
+  if(keys.q)camYaw+=dt*1.8;
+  if(keys.x)camYaw-=dt*1.8;
+  const wantA=aimHeld?1:0;aimBlend+=(wantA-aimBlend)*Math.min(1,dt*6);
+  const eDist=camDist+(3.2-camDist)*aimBlend,ePitch=camPitch+(0.16-camPitch)*aimBlend;
+  const cp=Math.cos(ePitch),sp=Math.sin(ePitch);
+  camPos.set(player.position.x+Math.sin(camYaw)*cp*eDist,
+   1.6+sp*eDist,
+   player.position.z+Math.cos(camYaw)*cp*eDist);
+  camPos.x+=Math.cos(camYaw)*0.9*aimBlend;
+  camPos.z+=-Math.sin(camYaw)*0.9*aimBlend;
+  if(inInterior){
+   camPos.x=THREE.MathUtils.clamp(camPos.x,player.position.x-9,player.position.x+9);
+   camPos.z=THREE.MathUtils.clamp(camPos.z,player.position.z-9,player.position.z+9);
+   camPos.y=Math.max(0.6,camPos.y);
+  }else{
+   camPos.x=THREE.MathUtils.clamp(camPos.x,-50,50);
+   camPos.z=THREE.MathUtils.clamp(camPos.z,-46,46);
+   camPos.y=Math.max(0.8,camPos.y);
+  }
+  camera.position.lerp(camPos,1-Math.exp(-dt*6));
+  tmpLook.set(player.position.x,1.6,player.position.z);
+  lookSm.lerp(tmpLook,1-Math.exp(-dt*8));camera.lookAt(lookSm);
+ }else if(state.camMode===1){
+  camPos.set(target.x,46,target.z+0.01);
+  camera.position.lerp(camPos,1-Math.exp(-dt*5));camera.lookAt(target);
+ }else{
+  camPos.copy(target).add(new THREE.Vector3(19,24,28));
+  camera.position.lerp(camPos,1-Math.exp(-dt*3));camera.lookAt(target);
+ }
+  const tFov=mounted?46:42;
+  if(Math.abs(camera.fov-tFov)>.1){camera.fov+=(tFov-camera.fov)*Math.min(1,dt*3);camera.updateProjectionMatrix();}
+  if(mounted&&isMoving)camera.position.y+=Math.sin(time*30)*.04;
+  renderer.render(scene,camera);
+  if(needShot){needShot=false;const a=document.createElement('a');a.download='fazenda-aurora.png';a.href=renderer.domElement.toDataURL('image/png');a.click();toast('Foto salva! 📸');}
+}
+addEventListener('resize',()=>{
+ camera.aspect=innerWidth/innerHeight;camera.updateProjectionMatrix();
+ renderer.setSize(innerWidth,innerHeight);
+});
+applyOutfit();updateHUD();frame();
+window.__auroraBooted=true;
+toast('Bem-vindo! Aproxime-se da terra e pressione E para plantar.');
+</script>
+</body>
+</html>
