@@ -39,9 +39,15 @@
 
   <!-- Barra de Ferramentas / Opções -->
   <nav id="toolbar" class="panel" aria-label="Opções do jogo">
-    <button id="soundButton" title="Alternar som">🔊 Som</button>
-    <button id="cameraButton" title="Alternar ângulo da câmera">Câmera · V</button>
-    <button id="menuButton" title="Abrir menu">Menu · Esc</button>
+    <button id="soundButton" title="Alternar som">
+      <span class="btn-icon">🔊</span><span class="btn-text"> Som</span>
+    </button>
+    <button id="cameraButton" title="Alternar ângulo da câmera">
+      <span class="btn-icon">🎥</span><span class="btn-text" id="cameraText"> Câmera · V</span>
+    </button>
+    <button id="menuButton" title="Abrir menu">
+      <span class="btn-icon">☰</span><span class="btn-text"> Menu · Esc</span>
+    </button>
   </nav>
 
   <!-- Ajuda / Teclas (Desktop) -->
@@ -54,7 +60,10 @@
 
   <!-- Painel de Missões e Metas -->
   <aside id="quest" class="panel">
-    <span class="eyebrow">VIDA NA VILA</span>
+    <div class="quest-title-row">
+      <span class="eyebrow">VIDA NA VILA</span>
+      <span id="questBadge" class="quest-badge">Missões</span>
+    </div>
     <div id="questText"></div>
     <progress id="goal" max="500" value="0"></progress>
     <small id="goalText"></small>
@@ -66,9 +75,15 @@
 
   <!-- Barra de Seleção de Sementes -->
   <nav id="bar" class="panel" aria-label="Sementes">
-    <button data-seed="0">1 · Cenoura</button>
-    <button data-seed="1">2 · Tomate</button>
-    <button data-seed="2">3 · Abóbora</button>
+    <button data-seed="0">
+      <span class="crop-icon">🥕</span> <span class="crop-name">1 · Cenoura</span> <span class="crop-qty">(8)</span>
+    </button>
+    <button data-seed="1">
+      <span class="crop-icon">🍅</span> <span class="crop-name">2 · Tomate</span> <span class="crop-qty">(3)</span>
+    </button>
+    <button data-seed="2">
+      <span class="crop-icon">🎃</span> <span class="crop-name">3 · Abóbora</span> <span class="crop-qty">(2)</span>
+    </button>
   </nav>
 
   <!-- Controles Touch para Celular / Tablet -->

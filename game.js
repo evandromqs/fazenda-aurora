@@ -237,13 +237,25 @@ function updateHUD() {
   $('stats').textContent = `Dia ${state.day} · Primavera · ${characters[state.character].name} | Energia ${state.energy}/100`;
   $('energyFill').style.width = `${state.energy}%`;
   $('wallet').textContent = `◉ ${state.money} moedas`;
-  $('cameraButton').textContent = `${viewNames[state.view]} · V`;
+  if ($('cameraText')) {
+    $('cameraText').textContent = ` ${viewNames[state.view]} · V`;
+  } else {
+    $('cameraButton').textContent = `${viewNames[state.view]} · V`;
+  }
   $('goal').value = Math.min(state.money, 500);
   $('goalText').textContent = state.won ? '✓ Meta de 500 moedas alcançada' : `${state.money} / 500 moedas na carteira`;
   $('questText').textContent = npcs.map(n => state.completed.includes(n.id) ? `✓ ${n.name}: entregue` : `${n.name}: ${n.quantity} ${crops[n.type].name.toLowerCase()} (${state.bag[n.type]}/${n.quantity})`).join(' · ');
+  const cropIcons = ['🥕', '🍅', '🎃'];
   document.querySelectorAll('[data-seed]').forEach((button, i) => {
     button.classList.toggle('active', i === selected);
-    button.textContent = `${i + 1} · ${crops[i].name} (${state.seeds[i]})`;
+    const nameEl = button.querySelector('.crop-name');
+    const qtyEl = button.querySelector('.crop-qty');
+    if (nameEl && qtyEl) {
+      nameEl.textContent = `${i + 1} · ${crops[i].name}`;
+      qtyEl.textContent = `(${state.seeds[i]})`;
+    } else {
+      button.textContent = `${cropIcons[i]} ${i + 1} · ${crops[i].name} (${state.seeds[i]})`;
+    }
   });
   $('shopStats').textContent = `${state.money} moedas · Colheita: ` + state.bag.map((n, i) => `${n} ${crops[i].name.toLowerCase()}`).join(', ');
   const sale = state.bag.reduce((sum, n, i) => sum + n * crops[i].price, 0);
@@ -254,8 +266,17 @@ function updateHUD() {
 }
 function updateSoundButton() {
   const sb = $('soundButton');
-  if (sb && window.Sound) {
-    sb.textContent = window.Sound.isMuted() ? '🔇 Mudo' : '🔊 Som';
+  if (!sb) return;
+  const muted = window.Sound ? window.Sound.isMuted() : false;
+  const icon = muted ? '🔇' : '🔊';
+  const text = muted ? ' Mudo' : ' Som';
+  const iconEl = sb.querySelector('.btn-icon');
+  const textEl = sb.querySelector('.btn-text');
+  if (iconEl && textEl) {
+    iconEl.textContent = icon;
+    textEl.textContent = text;
+  } else {
+    sb.textContent = `${icon}${text}`;
   }
 }
 function distance(x, z) { return Math.hypot(player.position.x - x, player.position.z - z); }
@@ -568,18 +589,20 @@ function frame() {
   select.visible = near >= 0 && playing;
   if (near >= 0) select.position.set(plots[near].x, .14, plots[near].z);
   
-  let hint = 'Explore a fazenda · WASD para andar';
+  const isTouch = document.body.classList.contains('touch-active');
+  let hint = isTouch ? 'Arraste o joystick para andar' : 'Explore a fazenda · WASD para andar';
   if (near >= 0) {
     const p = state.plots[near];
-    hint = p.type < 0 ? `E · Plantar ${crops[selected].name}` : p.age >= crops[p.type].days ?
-      `E · Colher ${crops[p.type].name}` : !p.water ? 'E · Regar' : 'Regado · Durma para crescer';
+    hint = p.type < 0 ? (isTouch ? `🌱 Plantar ${crops[selected].name}` : `E · Plantar ${crops[selected].name}`) :
+      p.age >= crops[p.type].days ? (isTouch ? `🥕 Colher ${crops[p.type].name}` : `E · Colher ${crops[p.type].name}`) :
+      !p.water ? (isTouch ? '💧 Regar canteiro' : 'E · Regar') : '⏳ Regado · Durma para crescer';
   }
   const nearHouse = distance(-8, -7.5) < 3.5;
   const nearMarket = distance(11, 6) < 3.7;
   const npc = nearestNPC();
-  if (nearHouse) hint = 'R · Dormir e começar um novo dia';
-  if (nearMarket) hint = 'E · Abrir o mercadinho';
-  if (npc) hint = `E · Conversar com ${npc.name}`;
+  if (nearHouse) hint = isTouch ? '🛌 Dormir na casa e avançar o dia' : 'R · Dormir e começar um novo dia';
+  if (nearMarket) hint = isTouch ? '🏪 Abrir o mercadinho' : 'E · Abrir o mercadinho';
+  if (npc) hint = isTouch ? `💬 Conversar com ${npc.name}` : `E · Conversar com ${npc.name}`;
   $('prompt').textContent = hint;
 
   // Atualizar botões touch contextuais

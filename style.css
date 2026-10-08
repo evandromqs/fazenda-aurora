@@ -1,9 +1,13 @@
-* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+* {
+  box-sizing: border-box;
+  -webkit-tap-highlight-color: transparent;
+}
+
 :root {
   --primary: #edc977;
   --primary-hover: #ffe4a5;
-  --bg-panel: #203b30f0;
-  --bg-border: #ffffff25;
+  --bg-panel: rgba(32, 59, 48, 0.94);
+  --bg-border: rgba(255, 255, 255, 0.22);
   --text-main: #fff5de;
   --text-muted: #d4dfce;
   --accent-gold: #ffe29a;
@@ -30,11 +34,15 @@ canvas {
 .panel {
   background: var(--bg-panel);
   border: 1px solid var(--bg-border);
-  border-radius: 18px;
-  box-shadow: 0 8px 32px rgba(19, 41, 27, 0.35);
+  border-radius: 16px;
+  box-shadow: 0 8px 30px rgba(19, 41, 27, 0.35);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
 }
+
+/* ==========================================================================
+   DESKTOP DEFAULT LAYOUT
+   ========================================================================== */
 
 #hud {
   position: absolute;
@@ -43,6 +51,7 @@ canvas {
   padding: 16px 22px;
   pointer-events: none;
   z-index: 4;
+  max-width: 350px;
 }
 
 h1 {
@@ -56,7 +65,6 @@ h1 {
 #stats {
   font-size: 13.5px;
   line-height: 1.7;
-  max-width: 340px;
   color: var(--text-muted);
 }
 
@@ -125,28 +133,30 @@ button:focus-visible {
   z-index: 4;
   pointer-events: none;
   transition: opacity 0.2s ease;
+  white-space: nowrap;
 }
 
 #toast {
   position: absolute;
   z-index: 25;
-  top: max(120px, env(safe-area-inset-top) + 100px);
+  top: max(115px, env(safe-area-inset-top) + 95px);
   left: 50%;
   transform: translateX(-50%);
-  padding: 12px 24px;
+  padding: 11px 22px;
   opacity: 0;
-  transition: opacity 0.25s ease, transform 0.25s ease;
+  transition: opacity 0.25s ease;
   pointer-events: none;
   text-align: center;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13.5px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+  max-width: 90vw;
 }
 
 #shop {
   position: absolute;
   inset: 0;
-  background: rgba(16, 39, 27, 0.75);
+  background: rgba(16, 39, 27, 0.78);
   display: none;
   place-items: center;
   z-index: 15;
@@ -179,7 +189,7 @@ small { opacity: 0.8; }
 
 #wallet {
   color: var(--accent-gold);
-  font-size: 17px;
+  font-size: 16.5px;
   margin-top: 8px;
   font-weight: 700;
 }
@@ -209,6 +219,9 @@ small { opacity: 0.8; }
 #toolbar button {
   font-size: 12.5px;
   padding: 9px 13px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
 }
 
 #quest {
@@ -222,6 +235,14 @@ small { opacity: 0.8; }
   pointer-events: none;
   z-index: 4;
 }
+.quest-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.quest-badge {
+  display: none;
+}
 
 progress {
   width: 100%;
@@ -232,6 +253,7 @@ progress {
 }
 #goalText { display: block; margin-top: 4px; }
 
+/* Modals */
 .overlay {
   position: fixed;
   inset: 0;
@@ -239,7 +261,7 @@ progress {
   display: grid;
   place-items: center;
   padding: 20px;
-  background: rgba(16, 39, 27, 0.78);
+  background: rgba(16, 39, 27, 0.82);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   overflow-y: auto;
@@ -249,10 +271,10 @@ progress {
   width: min(500px, 100%);
   padding: 36px;
   text-align: center;
-  background: #203b30f6;
+  background: #203b30f8;
 }
 .menu-card h1 {
-  font-size: clamp(42px, 7vw, 68px);
+  font-size: clamp(40px, 7vw, 68px);
   line-height: 0.96;
   font-weight: normal;
 }
@@ -342,41 +364,41 @@ body.touch-active .touch-only {
 
 #touchJoy {
   position: absolute;
-  bottom: max(25px, env(safe-area-inset-bottom) + 15px);
-  left: max(20px, env(safe-area-inset-left) + 10px);
-  width: 120px;
-  height: 120px;
+  bottom: max(18px, env(safe-area-inset-bottom) + 8px);
+  left: max(16px, env(safe-area-inset-left) + 6px);
+  width: 114px;
+  height: 114px;
   border-radius: 50%;
-  background: rgba(35, 61, 50, 0.5);
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  background: rgba(35, 61, 50, 0.55);
+  border: 2px solid rgba(255, 255, 255, 0.28);
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
   pointer-events: auto;
   touch-action: none;
-  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.25);
+  box-shadow: 0 4px 18px rgba(0, 0, 0, 0.3);
 }
 
 #touchKnob {
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 50px;
-  height: 50px;
-  margin: -25px 0 0 -25px;
+  width: 48px;
+  height: 48px;
+  margin: -24px 0 0 -24px;
   border-radius: 50%;
   background: radial-gradient(circle, #ffe4a5 30%, #edc977 100%);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
   pointer-events: none;
-  transition: transform 0.05s ease-out;
+  transition: transform 0.04s ease-out;
 }
 
 #touchActions {
   position: absolute;
-  bottom: max(25px, env(safe-area-inset-bottom) + 15px);
-  right: max(20px, env(safe-area-inset-right) + 10px);
+  bottom: max(18px, env(safe-area-inset-bottom) + 8px);
+  right: max(16px, env(safe-area-inset-right) + 6px);
   display: flex;
   flex-direction: column-reverse;
-  gap: 12px;
+  gap: 10px;
   align-items: flex-end;
   pointer-events: auto;
 }
@@ -384,11 +406,11 @@ body.touch-active .touch-only {
 .touch-btn {
   pointer-events: auto;
   touch-action: manipulation;
-  width: 64px;
-  height: 64px;
+  width: 62px;
+  height: 62px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.35);
-  background: rgba(32, 59, 48, 0.85);
+  background: rgba(32, 59, 48, 0.9);
   color: var(--accent-gold);
   font-weight: 700;
   font-size: 13px;
@@ -396,7 +418,7 @@ body.touch-active .touch-only {
   align-items: center;
   justify-content: center;
   text-align: center;
-  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
   padding: 0;
 }
 
@@ -407,26 +429,26 @@ body.touch-active .touch-only {
 }
 
 .touch-action {
-  width: 72px;
-  height: 72px;
+  width: 70px;
+  height: 70px;
   font-size: 14px;
-  background: rgba(237, 201, 119, 0.25);
+  background: rgba(237, 201, 119, 0.28);
   border-color: var(--primary);
   color: var(--primary-hover);
 }
 
 .touch-cam {
-  width: 48px;
-  height: 48px;
-  font-size: 18px;
+  width: 44px;
+  height: 44px;
+  font-size: 17px;
 }
 
 .touch-sleep {
   width: auto;
-  height: 48px;
-  border-radius: 24px;
+  height: 44px;
+  border-radius: 22px;
   padding: 0 16px;
-  font-size: 13px;
+  font-size: 12.5px;
 }
 
 body.menu-open #hud,
@@ -439,25 +461,238 @@ body.menu-open #touchControls {
   visibility: hidden;
 }
 
+/* ==========================================================================
+   📱 RESPONSIVE MOBILE LAYOUT (SMARTPHONES & TABLETS)
+   Garante que nenhum elemento se sobreponha ou fique oculto
+   ========================================================================== */
+
 @media (max-width: 800px) {
-  #help { display: none; }
-  #hud { padding: 12px 16px; }
-  h1 { font-size: 20px; }
-  #quest { display: none; }
-  #bar { bottom: max(14px, env(safe-area-inset-bottom)); }
-  #bar button { padding: 8px 12px; font-size: 12px; }
-  #toolbar button { padding: 8px 10px; font-size: 11px; }
-  #prompt { font-size: 13px; bottom: max(100px, env(safe-area-inset-bottom) + 85px); }
-  .modal-card { padding: 20px; }
-  .menu-card { padding: 26px 20px; }
-  .character-card { padding: 12px 4px; }
-  .avatar { transform: scale(0.85); margin-bottom: 6px; }
+  /* 1. Top HUD (Superior Esquerdo) - Enxuto e sem colidir */
+  #hud {
+    top: max(10px, env(safe-area-inset-top));
+    left: max(10px, env(safe-area-inset-left));
+    padding: 9px 13px;
+    max-width: calc(100vw - 145px);
+    border-radius: 13px;
+  }
+  #hud .eyebrow {
+    display: none;
+  }
+  #hud h1 {
+    font-size: 15px;
+    margin: 0 0 2px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #stats {
+    font-size: 11px;
+    line-height: 1.35;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  #wallet {
+    font-size: 13.5px;
+    margin-top: 3px;
+    font-weight: 700;
+  }
+  .meter {
+    height: 4px;
+    margin-top: 4px;
+  }
+
+  /* 2. Top Toolbar (Superior Direito) - Botões compactos de ícone */
+  #toolbar {
+    top: max(10px, env(safe-area-inset-top));
+    right: max(10px, env(safe-area-inset-right));
+    padding: 4px;
+    gap: 5px;
+    border-radius: 13px;
+  }
+  #toolbar button {
+    width: 36px;
+    height: 36px;
+    padding: 0;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 16px;
+  }
+  #toolbar .btn-text {
+    display: none;
+  }
+
+  /* 3. Ajuda do teclado - Oculta no mobile (usado via menu) */
+  #help {
+    display: none;
+  }
+
+  /* 4. Painel de Missões & Metas - NUNCA ESCONDIDO! */
+  /* Posicionado logo abaixo do Top Bar com layout elegante */
+  #quest {
+    display: block !important;
+    position: absolute;
+    top: max(84px, env(safe-area-inset-top) + 72px);
+    left: max(10px, env(safe-area-inset-left));
+    right: auto;
+    bottom: auto;
+    max-width: calc(100vw - 20px);
+    width: auto;
+    padding: 7px 12px;
+    font-size: 11px;
+    line-height: 1.35;
+    background: rgba(32, 59, 48, 0.92);
+    border-radius: 12px;
+    pointer-events: none;
+    z-index: 4;
+  }
+  #quest .eyebrow {
+    font-size: 8px;
+    letter-spacing: 1px;
+    margin-bottom: 2px;
+    display: inline-block;
+  }
+  #questText {
+    font-size: 11px;
+    color: var(--accent-gold);
+    display: block;
+    margin-top: 1px;
+  }
+  progress {
+    height: 5px;
+    margin-top: 4px;
+  }
+  #goalText {
+    font-size: 9.5px;
+    margin-top: 2px;
+    opacity: 0.85;
+  }
+
+  /* 5. Notificações Toast - Perfeitamente centralizadas */
+  #toast {
+    top: max(140px, env(safe-area-inset-top) + 125px);
+    font-size: 12.5px;
+    padding: 9px 18px;
+  }
+
+  /* 6. Barra de Sementes - Posicionada ACIMA da área de toque */
+  #bar {
+    bottom: max(138px, env(safe-area-inset-bottom) + 125px);
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 5px 8px;
+    gap: 6px;
+    border-radius: 14px;
+    z-index: 5;
+  }
+  #bar button {
+    padding: 7px 11px;
+    font-size: 12.5px;
+    border-radius: 10px;
+  }
+
+  /* 7. Prompt / Dica - Flutuando acima da barra de sementes */
+  #prompt {
+    bottom: max(188px, env(safe-area-inset-bottom) + 175px);
+    font-size: 12px;
+    padding: 6px 14px;
+    border-radius: 20px;
+  }
+
+  /* Modais no Mobile */
+  .modal-card {
+    padding: 20px;
+    max-height: 90vh;
+  }
+  .menu-card {
+    padding: 26px 20px;
+    max-height: 90vh;
+  }
+  .character-card {
+    padding: 12px 4px;
+  }
+  .avatar {
+    transform: scale(0.85);
+    margin-bottom: 6px;
+  }
 }
 
-@media (max-height: 600px) {
-  .menu-card { padding: 20px; }
-  .menu-card h1 { font-size: 38px; }
-  #hud { padding: 8px 12px; }
-  #hud h1 { font-size: 18px; }
-  #bar button { padding: 6px 10px; }
+/* Telas muito estreitas (< 550px) */
+@media (max-width: 550px) {
+  #bar .crop-name {
+    display: none;
+  }
+  #bar button {
+    padding: 7px 9px;
+    font-size: 12px;
+  }
+}
+
+/* ==========================================================================
+   📱 MODO PAISAGEM / LANDSCAPE (Celulares na horizontal)
+   ========================================================================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  #hud {
+    top: max(6px, env(safe-area-inset-top));
+    left: max(8px, env(safe-area-inset-left));
+    padding: 6px 10px;
+    max-width: 230px;
+  }
+  #hud h1 { font-size: 13.5px; margin-bottom: 1px; }
+  #stats { font-size: 10px; }
+  #wallet { font-size: 12px; margin-top: 2px; }
+
+  #toolbar {
+    top: max(6px, env(safe-area-inset-top));
+    right: max(8px, env(safe-area-inset-right));
+    padding: 3px;
+  }
+  #toolbar button { width: 32px; height: 32px; font-size: 14px; }
+
+  /* Em paisagem, o painel de missões fica no centro-topo */
+  #quest {
+    top: max(6px, env(safe-area-inset-top)) !important;
+    left: 245px !important;
+    max-width: 300px !important;
+    padding: 5px 9px !important;
+  }
+
+  #bar {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    padding: 4px 6px;
+    gap: 5px;
+  }
+  #bar button { padding: 5px 8px; font-size: 11px; }
+
+  #touchJoy {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    left: max(12px, env(safe-area-inset-left));
+    width: 90px;
+    height: 90px;
+  }
+  #touchKnob {
+    width: 38px;
+    height: 38px;
+    margin: -19px 0 0 -19px;
+  }
+
+  #touchActions {
+    bottom: max(10px, env(safe-area-inset-bottom));
+    right: max(12px, env(safe-area-inset-right));
+    gap: 6px;
+  }
+  .touch-action { width: 56px; height: 56px; font-size: 12px; }
+  .touch-cam { width: 36px; height: 36px; font-size: 14px; }
+  .touch-sleep { height: 36px; padding: 0 10px; font-size: 11px; }
+
+  #prompt {
+    bottom: max(55px, env(safe-area-inset-bottom) + 48px);
+    font-size: 11px;
+    padding: 4px 10px;
+  }
+
+  .menu-card { padding: 18px; }
+  .menu-card h1 { font-size: 32px; }
+  #play { padding: 10px; }
 }
